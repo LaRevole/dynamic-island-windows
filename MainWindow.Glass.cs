@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -221,7 +221,7 @@ public partial class MainWindow
             SetFrostCovers(false);
             return;
         }
-        if (!IslandGlass || Lite || !FrostCanGrab || _hidden || _fullscreenHidden || _gameFront || !IsLoaded || !Island.IsVisible) { PauseFrost(); if (Lite || !FrostCanGrab || _gameFront) { FrostHost.BeginAnimation(OpacityProperty, null); FrostHost.Opacity = 0; } SetFrostCovers(false); return; }
+        if (!IslandGlass || Lite || !FrostCanGrab || _hidden || _fullscreenHidden || _gameFront || !IsLoaded || !Island.IsVisible) { PauseFrost(); if (Lite || !FrostCanGrab || _gameFront || !IslandGlass) { FrostHost.BeginAnimation(OpacityProperty, null); FrostHost.Opacity = 0; CompactFrostBuffers(); } SetFrostCovers(false); return; }
         // grabbing the screen makes Windows finish composing first: never while the size is changing
         if (_rendering && !(_w.IsSettled && _h.IsSettled)) { PauseFrost(); return; }
         if (_frostTestBackdrop != null || _demoPlate != null)   // still pictures: taken again when the size changes, or after half a second
@@ -263,6 +263,40 @@ public partial class MainWindow
         if (_frostWant == null) return;
         _frostWant = null;
         _frostGen++;
+    }
+
+    /// <summary>Release expanded-size glass buffers after collapsing to Compact or disabling glass.</summary>
+    private void CompactFrostBuffers()
+    {
+        bool dropAll = !IslandGlass || Lite || _gameFront || ClearGlass;
+        if (dropAll)
+        {
+            PauseFrost();
+            _frostPixels = null;
+            _frostSig = 0;
+            for (int i = 0; i < _frostBmps.Length; i++)
+            {
+                _frostBmps[i] = null;
+                FrostLayers[i].Source = null;
+            }
+            while (_frostFree.TryDequeue(out var f))
+            {
+                f.Px = [];
+                _frostFree.Enqueue(f);
+                if (_frostFree.Count >= 3) break;
+            }
+            return;
+        }
+
+        // Keep at most the active compact layer; drop the secondary fade buffer and oversized pixel arrays.
+        int back = 1 - _frostFront;
+        _frostBmps[back] = null;
+        FrostLayers[back].Source = null;
+        if (_frostHalf > 260 || _frostHeight > 120)
+        {
+            _frostPixels = null;
+            foreach (var f in _frostFree) f.Px = [];
+        }
     }
 
     // ---------------------------------------------------------------- the grab loop

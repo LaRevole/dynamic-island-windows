@@ -8,6 +8,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <RootNamespace>DynamicIsland</RootNamespace>
     <AssemblyName>DynamicIsland</AssemblyName>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>

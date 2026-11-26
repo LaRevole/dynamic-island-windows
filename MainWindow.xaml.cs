@@ -3705,6 +3705,11 @@ public partial class MainWindow : Window
         double h = Math.Max(CompactWindowHeight * UiScale, Math.Ceiling(IslandTopMargin + Math.Max(Island.Height, _h.Target) * UiScale + PillRoom));
         h = Math.Min(FullWindowHeight, h);
         if (Math.Abs(Height - h) > 1) Height = h;
+        if (_mode == Mode.Compact)
+        {
+            CompactFrostBuffers();
+            Native.TrimWorkingSet(collectGc: false);
+        }
     }
 
     private void MorphTo(Size size)

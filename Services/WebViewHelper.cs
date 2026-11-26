@@ -24,10 +24,11 @@ public static class WebViewHelper
         App.TestRun ? "WebView2Test" : "WebView2");
 
     private const string BrowserArgs =
-        "--disable-features=DeviceBoundSessions,EnableBoundSessionCredentials,DeviceBoundSessionsRefreshQuota " +
+        "--disable-features=DeviceBoundSessions,EnableBoundSessionCredentials,DeviceBoundSessionsRefreshQuota,SpareRendererForSitePerProcess,Translate,OptimizationHints,MediaRouter " +
         "--process-per-site " +
         "--renderer-process-limit=2 " +
         "--disk-cache-size=33554432 " +
+        "--media-cache-size=16777216 " +
         "--disable-background-networking " +
         "--disable-component-update " +
         "--disable-domain-reliability " +
@@ -60,6 +61,10 @@ public static class WebViewHelper
             background: rgba(255, 255, 255, 0.50) !important;
             border: 2px solid transparent !important;
             background-clip: padding-box !important;
+        }
+        html.atoll-bg *, html.atoll-bg *::before, html.atoll-bg *::after {
+            animation-play-state: paused !important;
+            transition: none !important;
         }
         """;
 
@@ -128,6 +133,8 @@ public static class WebViewHelper
             core.MemoryUsageTargetLevel = active
                 ? CoreWebView2MemoryUsageTargetLevel.Normal
                 : CoreWebView2MemoryUsageTargetLevel.Low;
+            if (!core.IsSuspended)
+                _ = core.ExecuteScriptAsync($"document.documentElement?.classList.toggle('atoll-bg', {(active ? "false" : "true")});");
         }
         catch (Exception ex) { Log.Write("webview: active: " + ex.GetType().Name); }
     }

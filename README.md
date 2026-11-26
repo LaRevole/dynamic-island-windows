@@ -30,6 +30,7 @@ notes, a calendar, notifications and a little character that lives in the pill �
 
 ## Contents
 
+- [Fork additions (2.2.1)](#fork-additions-221)
 - [What's new in 1.8](#whats-new-in-18)
 - [Features](#features)
 - [Install (2 minutes, no admin rights)](#install)
@@ -40,6 +41,20 @@ notes, a calendar, notifications and a little character that lives in the pill �
 - [Privacy and security](#privacy-and-security)
 - [FAQ](#faq)
 - [Build from source](#build-from-source)
+
+---
+
+## Fork additions (2.2.1)
+
+Forked from [Fuwni/dynamic-island-windows](https://github.com/Fuwni/dynamic-island-windows) (`v2.2.0` — edges, side/taskbar placement, tab wheel) with a focus on practical daily use, native players and lower memory footprint:
+
+- 🎧 **Native AIMP Remote API (`AIMP2_RemoteInfo`) support** ([Services/AimpRemote.cs](Services/AimpRemote.cs)): real-time track metadata (title, artist, album, cover art, duration), playback state, seek, repeat and controls without external AIMP plugins.
+- 🎵 **Built-in Yandex Music web player** (`https://music.yandex.ru/`): added to the Music tab with search, Collection (`/collection`), in-island Yandex ID sign-in pop-ups (`yandex.ru`, `yandex.com`, `ya.ru`), localized source attribution and stale SMTC session recovery.
+- 🖱️ **Fixed WebView2 scrolling & visible vertical scrollbar** ([Services/WebViewHelper.cs](Services/WebViewHelper.cs)): mouse wheel scrolls inside embedded websites (Music and Chat) instead of switching island tabs, plus a visible vertical scrollbar for sites that hide it.
+- ⚡ **Memory & resource optimizations:**
+  - **Shared WebView2 environment** (`WebView2`) for Music and Chat (one Chromium process tree instead of two), bounded caches (`32 MB` disk / `16 MB` media), `--process-per-site`, `--renderer-process-limit=2`, `Low` memory target + paused decorative CSS animations while folded, `20 s` auto-suspend when silent and `90 s` idle unload.
+  - **Lean host footprint:** compacting expanded glass buffers on fold (`CompactFrostBuffers`), `1/5` wallpaper downscale with lazy `WallpaperService` startup, lazy Microsoft Store scan in `AppIndex` with a 40-icon cap, Workstation GC memory conservation (`runtimeconfig.template.json`) and working-set trimming.
+  - Measured (`--run musicplayer yandex kino`): `DynamicIsland.exe` drops from `457 MB` (open WebView2) to `68 MB` on fold and `61 MB` after idle WebView2 release.
 
 ---
 
@@ -319,7 +334,7 @@ Nothing can be drawn over *exclusive* fullscreen games; switch the game to borde
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
-git clone https://github.com/Fuwni/dynamic-island-windows.git
+git clone https://github.com/LaRevole/dynamic-island-windows.git
 cd dynamic-island-windows
 dotnet run -c Release
 ```
@@ -361,8 +376,9 @@ MainWindow.xaml        the island: compact view, notifications, all pages
 MainWindow.*.cs        logic in parts: Media, Weather, Actions, Chat, Live, Tools, Liquid, Glass,
                        Command, TextShelf, Buddy, Settings, Claude, Demo
 Views/                 characters, screenshot editor, region picker / colour picker, chromatic effect
-Services/              music, weather, lyrics, capture and OCR, recording, calendar, notifications,
-                       clipboard, system load, Do Not Disturb, Claude Code hooks and bridge, safe link opening
+Services/              music (AIMP Remote, Yandex Music), WebViewHelper, weather, lyrics, capture and OCR,
+                       recording, calendar, notifications, clipboard, system load, Do Not Disturb,
+                       Claude Code hooks and bridge, safe link opening
 Assets/                icon and the Claude Code bridge script
 ```
 

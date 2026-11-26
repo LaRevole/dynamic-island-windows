@@ -104,7 +104,7 @@ public sealed class WallpaperService
     /// <summary>Blurred: the frosted middle of the glass. Clear: barely blurred, what the rim's lens bends.</summary>
     public sealed record Monitor(Rect BoundsPx, BitmapSource Blurred, BitmapSource Clear, double Scale, byte[] Pixels, int Stride);
 
-    private const double Downscale = 1 / 3.0;
+    private const double Downscale = 1 / 5.0;
     public double BlurPx { get; set; } = 36;
 
     public IReadOnlyList<Monitor> Monitors { get; private set; } = [];
@@ -145,6 +145,15 @@ public sealed class WallpaperService
     }
 
     public void Soon() { _debounce.Stop(); _debounce.Start(); }
+
+    /// <summary>Release cached monitor bitmaps and pixel arrays when desktop glass widgets are not in use.</summary>
+    public void Clear()
+    {
+        _debounce.Stop();
+        if (Monitors.Count == 0) return;
+        Monitors = [];
+        Changed?.Invoke();
+    }
 
     /// <summary>Is a live-wallpaper program drawing the desktop right now?</summary>
     public static bool DetectLiveWallpaper()

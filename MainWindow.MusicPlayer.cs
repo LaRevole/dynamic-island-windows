@@ -26,9 +26,9 @@ public partial class MainWindow
     private string _musicSubfolder = "";
     private int _musicSearch;
     private DateTime _musicPlayedAt = DateTime.Now;
-    private readonly System.Windows.Threading.DispatcherTimer _musicIdleTimer = new() { Interval = TimeSpan.FromSeconds(30) };
-    private static readonly TimeSpan MusicSuspendAfter = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan MusicIdle = TimeSpan.FromMinutes(3);
+    private readonly System.Windows.Threading.DispatcherTimer _musicIdleTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    private static readonly TimeSpan MusicSuspendAfter = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan MusicIdle = TimeSpan.FromSeconds(90);
 
     private bool MusicSiteShown => _musicWeb != null && _musicSource == _musicSite && !_musicFullView;
 
@@ -364,6 +364,7 @@ public partial class MainWindow
             if (web != null) { MusicWebHost.Children.Remove(web); web.Dispose(); }
         }
         catch (Exception ex) { Log.Write("music: dispose: " + ex.GetType().Name + ": " + ex.Message); }
+        if (web != null && !_shutDown) Native.TrimWorkingSet(collectGc: true);
         if (!_shutDown) ShowMusicPart();
     }
 

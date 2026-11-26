@@ -12,8 +12,10 @@ public sealed class AppIndex
 {
     public sealed record App(string Name, string Path);
 
+    private const int MaxCachedIcons = 40;
     private List<App> _apps = [];
     private readonly Dictionary<string, ImageSource?> _icons = new();
+    private readonly Queue<string> _iconOrder = new();
     private Task? _loading;
 
     public Task EnsureLoadedAsync() => _loading ??= Task.Run(Load);
@@ -99,23 +101,29 @@ public sealed class AppIndex
         return name.Contains(q, StringComparison.OrdinalIgnoreCase) ? 1 : 0;
     }
 
-    /// <summary>The program's own icon (cached). Call on the UI thread.</summary>
+    /// <summary>The program's own icon (bounded LRU/FIFO cache). Call on the UI thread.</summary>
     public ImageSource? Icon(string path)
     {
         if (_icons.TryGetValue(path, out var cached)) return cached;
         ImageSource? img = ShellIcons.Get(path, 32);
-        if (img != null) return _icons[path] = img;
-        try
+        if (img == null)
         {
-            using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
-            if (icon != null)
+            try
             {
-                img = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                img.Freeze();
+                using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
+                if (icon != null)
+                {
+                    img = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    img.Freeze();
+                }
             }
+            catch { /* no icon: the generic one */ }
         }
-        catch { /* no icon: the generic one */ }
-        return _icons[path] = img;
+        if (_icons.Count >= MaxCachedIcons && _iconOrder.TryDequeue(out var oldest))
+            _icons.Remove(oldest);
+        _icons[path] = img;
+        _iconOrder.Enqueue(path);
+        return img;
     }
 
     public static bool IsStoreApp(string path) => path.StartsWith("shell:AppsFolder", StringComparison.OrdinalIgnoreCase);

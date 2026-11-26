@@ -24,13 +24,13 @@ public partial class MainWindow
     private bool _chatStarting;
     private bool _chatHostHooked;
     private DateTime _chatSeenAt = DateTime.Now;
-    private readonly System.Windows.Threading.DispatcherTimer _chatIdleTimer = new() { Interval = TimeSpan.FromSeconds(30) };
-    private static readonly TimeSpan ChatSuspendAfter = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan ChatIdle = TimeSpan.FromMinutes(3);
+    private readonly System.Windows.Threading.DispatcherTimer _chatIdleTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    private static readonly TimeSpan ChatSuspendAfter = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan ChatIdle = TimeSpan.FromSeconds(90);
 
     /// <summary>
     /// The embedded browser takes several hundred MB. Hidden away from the chat it is trimmed/suspended
-    /// after 30 s, and closed after 3 minutes (the login stays: cookies are on disk).
+    /// after 20 s, and closed after 90 s (the login stays: cookies are on disk).
     /// </summary>
     private void ReleaseIdleChat()
     {
@@ -51,6 +51,7 @@ public partial class MainWindow
             chat.Dispose();
         }
         catch (Exception ex) { Services.Log.Write("chat: dispose: " + ex.GetType().Name + ": " + ex.Message); }
+        Services.Native.TrimWorkingSet(collectGc: true);
         ChatPlaceholder.Visibility = Visibility.Visible;
         _chatIdleTimer.Stop();
     }

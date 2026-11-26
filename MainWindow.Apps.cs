@@ -28,8 +28,9 @@ public partial class MainWindow
         _appsTimer.Tick += (_, _) => Measure("apps", UpdateRunningApps);
         HomePage.IsVisibleChanged += (_, _) => { if (HomePage.IsVisible) { UpdateRunningApps(); _appsTimer.Start(); } else _appsTimer.Stop(); };
         BuildApps();
-        // Store apps get their names once the index has loaded
-        _ = _apps.EnsureLoadedAsync().ContinueWith(_ => Dispatcher.InvokeAsync(BuildApps));
+        // Scan Store apps at startup only if a Store app is already pinned; otherwise defer until Command Bar / Search.
+        if (_settings.DockApps.Any(AppIndex.IsStoreApp))
+            _ = _apps.EnsureLoadedAsync().ContinueWith(_ => Dispatcher.InvokeAsync(BuildApps));
     }
 
     private void BuildApps()

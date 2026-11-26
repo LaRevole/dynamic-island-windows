@@ -210,6 +210,23 @@ internal static class Native
     [DllImport("user32.dll")] public static extern bool DestroyWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool GetWindowDisplayAffinity(IntPtr hwnd, out uint affinity);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string? name);
+    [DllImport("kernel32.dll")] private static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll")] private static extern bool SetProcessWorkingSetSizeEx(IntPtr process, IntPtr minSize, IntPtr maxSize, uint flags);
+
+    /// <summary>
+    /// Gently release unused pages back to Windows and optionally run an optimized Gen2 compacting GC
+    /// after closing heavy components (WebView2, screen capture, large glass buffers).
+    /// </summary>
+    public static void TrimWorkingSet(bool collectGc = false)
+    {
+        if (collectGc)
+        {
+            System.Runtime.GCSettings.LargeObjectHeapCompactionMode = System.Runtime.GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect(2, GCCollectionMode.Optimized, blocking: false);
+        }
+        try { SetProcessWorkingSetSizeEx(GetCurrentProcess(), new IntPtr(-1), new IntPtr(-1), 0); }
+        catch { /* best-effort OS hint */ }
+    }
 
     // ------------------------------------------------------------------ graphics cards
 

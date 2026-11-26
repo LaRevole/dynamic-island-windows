@@ -215,8 +215,23 @@ public partial class MainWindow
     }
 
     /// <summary>The glass changed kind (wallpaper program started or stopped, settings): rebuild the widgets.</summary>
+    private bool _wallpaperStarted;
+
+    private void EnsureWallpaperStarted()
+    {
+        if (_wallpaperStarted) return;
+        _wallpaperStarted = true;
+        _wallpaper.BlurPx = _settings.GlassBlur;
+        _wallpaper.Start();
+    }
+
     private void RefreshWidgetGlass()
     {
+        bool needWallpaper = !Lite && _settings.WidgetLiveGlass && !Motion.NoTransparency && !Settings.ReadOnly
+            && (_widgets.Count > 0 || _wallpaper.Override != null);
+        if (needWallpaper) EnsureWallpaperStarted();
+        else if (_wallpaper.Available && _widgets.Count == 0 && _wallpaper.Override == null) _wallpaper.Clear();
+
         var kind = WidgetGlassKind();
         _wallpaper.BlurPx = _settings.GlassBlur;
         foreach (var (id, w) in _widgets.ToList())
@@ -237,8 +252,8 @@ public partial class MainWindow
         _widgetTimer.Tick += (_, _) => Measure("widgets", TickWidgets);
         _wallpaper.Changed += RefreshWidgetGlass;
         if (IsToolRun) return;
-        _wallpaper.BlurPx = _settings.GlassBlur;
-        _wallpaper.Start();
+        if (_settings.DesktopWidgets.Count > 0 && !_settings.WidgetsHidden && _settings.WidgetLiveGlass && !Lite && !Motion.NoTransparency)
+            EnsureWallpaperStarted();
         Spec = GridLayout.Get(_settings.WidgetGrid);
         DesktopWidgetWindow.OnTop = _settings.WidgetsOnTop;
         _layoutKey = CurrentLayoutKey();
@@ -585,6 +600,7 @@ public partial class MainWindow
             _widgets.Clear(); _widgetUpdaters.Clear(); _openWidgets.Clear();
             foreach (var w in all) w.Close();
             _widgetTimer.Stop();
+            if (_wallpaper.Override == null) _wallpaper.Clear();
         }
         else
         {
@@ -644,7 +660,11 @@ public partial class MainWindow
         _widgetUpdaters.Remove(id);
         _settings.DesktopWidgets.Remove(id);
         _settings.Save();
-        if (_widgets.Count == 0 && !_widgetsEditing) _widgetTimer.Stop();
+        if (_widgets.Count == 0 && !_widgetsEditing)
+        {
+            _widgetTimer.Stop();
+            if (_wallpaper.Override == null) _wallpaper.Clear();
+        }
         if (TabWidgets.IsChecked == true && _mode == Mode.Expanded) RenderWidgetsPage();
     }
 
@@ -662,6 +682,7 @@ public partial class MainWindow
     {
         var kind = WidgetKinds.FirstOrDefault(k => k.Id == id);
         if (kind == null || _widgets.ContainsKey(id)) return;
+        if (!Lite && _settings.WidgetLiveGlass && !Motion.NoTransparency && !Settings.ReadOnly) EnsureWallpaperStarted();
         var size = SizeFor(kind);
         var (cw, ch) = SizeOf(size);
         var w = new DesktopWidgetWindow(id, cw, ch, WidgetGlassKind());
@@ -881,7 +902,7 @@ public partial class MainWindow
         VizControl();
         LyricsControl();
         // a live-wallpaper program started or quit: the picture behind the widgets is (no longer) the wallpaper
-        if (_widgetTicks % 15 == 0 && _wallpaper.Override == null && WallpaperService.DetectLiveWallpaper() != _wallpaper.LiveWallpaper) _wallpaper.Rebuild();
+        if (_widgetTicks % 15 == 0 && _wallpaper.Available && _wallpaper.Override == null && WallpaperService.DetectLiveWallpaper() != _wallpaper.LiveWallpaper) _wallpaper.Rebuild();
         bool wantStats = _galleryUpdaters.Count > 0 || _openWidgets.ContainsKey("system") || _widgets.Any(p => p.Key is "cpu" or "gpu" or "ram" or "system" && !p.Value.Paused);
         if (wantStats && !_statsBusy && _widgetTicks % 2 == 0)
         {
