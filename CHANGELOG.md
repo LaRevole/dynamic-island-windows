@@ -2,6 +2,12 @@
 
 All notable changes to Atoll (formerly "Dynamic Island for Windows"). Русская версия каждого пункта — ниже английской.
 
+## 2.2.1 — 2026-11-27
+
+- **Fork sync & native AIMP support:** synced with upstream Atoll 2.2.0 and merged native AIMP Remote API (`AIMP2_RemoteInfo`) integration (`feat/aimp-remote-support`) for real-time track metadata, playback state, and controls without external AIMP plugins.
+
+- **Синхронизация форка и нативная поддержка AIMP:** база обновлена до Atoll 2.2.0, вмержена нативная интеграция с AIMP Remote API (`AIMP2_RemoteInfo`) из ветки `feat/aimp-remote-support` — отображение трека, состояния воспроизведения и управление без сторонних плагинов AIMP.
+
 ## 2.2.0 — 2026-11-26
 
 - **The island never goes past the screen's edge.** Pushed against a side (or low on the screen), it used to open partly off the screen. Now it opens inward and goes back to its place when it folds; the place you chose never moves. Dragged, it gives way softly at the edge instead of sliding off.
