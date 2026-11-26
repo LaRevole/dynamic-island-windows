@@ -31,6 +31,22 @@ public class MusicPlayersTests
             MusicPlayers.AddressFor(MusicPlayers.All.Single(p => p.Id == "spotify"), " AC/DC Кино "));
 
     [Fact]
+    public void YandexMusicHasValidUrlsAndSignInHosts()
+    {
+        var yandex = MusicPlayers.ById("yandex");
+        Assert.Equal("yandex", yandex.Id);
+        Assert.Equal("https://music.yandex.ru/", yandex.Home);
+        Assert.Equal("https://music.yandex.ru/collection", yandex.Playlists);
+        Assert.Equal("https://music.yandex.ru/search?text=%D0%9A%D0%B8%D0%BD%D0%BE%20%D0%9F%D0%B0%D1%87%D0%BA%D0%B0",
+            MusicPlayers.AddressFor(yandex, "Кино Пачка"));
+        Assert.True(SafeShell.IsOnHost("https://passport.yandex.ru/auth", MusicPlayers.Hosts));
+        Assert.True(SafeShell.IsOnHost("https://id.yandex.ru/", MusicPlayers.Hosts));
+        Assert.True(SafeShell.IsOnHost("https://passport.yandex.com/auth", MusicPlayers.Hosts));
+        Assert.True(SafeShell.IsOnHost("https://ya.ru/", MusicPlayers.Hosts));
+        Assert.False(SafeShell.IsOnHost("https://evil.example/", MusicPlayers.Hosts));
+    }
+
+    [Fact]
     public void StationsWithoutHttpsAndSomaFmAreLeftOut()
     {
         var found = RadioDirectory.Parse("""

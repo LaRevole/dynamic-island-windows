@@ -28,6 +28,7 @@ public static class MusicPlayers
         new("soundcloud", "SoundCloud", "https://soundcloud.com/", "https://soundcloud.com/search?q={0}", "https://soundcloud.com/you/sets"),
         new("deezer", "Deezer", "https://www.deezer.com/", "https://www.deezer.com/search/{0}", "https://www.deezer.com/profile/me/playlists"),
         new("apple", "Apple Music", "https://music.apple.com/", "https://music.apple.com/search?term={0}", "https://music.apple.com/library/all-playlists"),
+        new("yandex", "Яндекс Музыка", "https://music.yandex.ru/", "https://music.yandex.ru/search?text={0}", "https://music.yandex.ru/collection"),
         new("radio", "Радио"),
         new("files", "Свои файлы"),
     ];
@@ -36,6 +37,7 @@ public static class MusicPlayers
     public static readonly string[] Hosts =
     [
         "youtube.com", "spotify.com", "soundcloud.com", "deezer.com", "music.apple.com",
+        "yandex.ru", "yandex.com", "ya.ru",
         "accounts.google.com", "appleid.apple.com", "idmsa.apple.com", "www.facebook.com",
     ];
 
