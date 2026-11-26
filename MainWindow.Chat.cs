@@ -24,17 +24,25 @@ public partial class MainWindow
     private bool _chatStarting;
     private bool _chatHostHooked;
     private DateTime _chatSeenAt = DateTime.Now;
-    private readonly System.Windows.Threading.DispatcherTimer _chatIdleTimer = new() { Interval = TimeSpan.FromMinutes(1) };
+    private readonly System.Windows.Threading.DispatcherTimer _chatIdleTimer = new() { Interval = TimeSpan.FromSeconds(30) };
+    private static readonly TimeSpan ChatSuspendAfter = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ChatIdle = TimeSpan.FromMinutes(3);
 
     /// <summary>
-    /// The embedded browser takes several hundred MB. After 10 minutes away from the chat it is closed
-    /// (the login stays: cookies are on disk) and opens again the next time you look at the chat.
+    /// The embedded browser takes several hundred MB. Hidden away from the chat it is trimmed/suspended
+    /// after 30 s, and closed after 3 minutes (the login stays: cookies are on disk).
     /// </summary>
     private void ReleaseIdleChat()
     {
         if (_chat == null || _chatStarting) return;
         if (_mode == Mode.Expanded && TabChat.IsChecked == true) { _chatSeenAt = DateTime.Now; return; }
-        if (DateTime.Now - _chatSeenAt < TimeSpan.FromMinutes(10)) return;
+        var idle = DateTime.Now - _chatSeenAt;
+        if (idle >= ChatSuspendAfter && idle < ChatIdle)
+        {
+            _ = Services.WebViewHelper.TrySuspendIfIdleAsync(_chat.CoreWebView2);
+            return;
+        }
+        if (idle < ChatIdle) return;
         var chat = _chat;
         _chat = null;
         try
@@ -130,12 +138,7 @@ public partial class MainWindow
 
         try
         {
-            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", "WebView2");
-            // Google's "device bound sessions" tie a login to a hardware key that embedded browsers
-            // can't always re-prove after a restart - which looks like being logged out. Plain cookies instead.
-            var options = new CoreWebView2EnvironmentOptions(
-                "--disable-features=DeviceBoundSessions,EnableBoundSessionCredentials,DeviceBoundSessionsRefreshQuota");
-            var env = await CoreWebView2Environment.CreateAsync(null, dataDir, options);
+            var env = await Services.WebViewHelper.GetEnvironmentAsync();
 
             // composition control renders inside our transparent window (the classic one can't)
             _chat = new WebView2CompositionControl { Visibility = Visibility.Hidden };
@@ -149,6 +152,8 @@ public partial class MainWindow
 
             await _chat.EnsureCoreWebView2Async(env);
             var core = _chat.CoreWebView2;
+            Services.WebViewHelper.ApplyLeanSettings(core.Settings);
+            await Services.WebViewHelper.InstallVisibleScrollbarsAsync(core);
             // tell the island when you type (only that a key was pressed - never what)
             await core.AddScriptToExecuteOnDocumentCreatedAsync(
                 "addEventListener('keydown',e=>{try{chrome.webview.postMessage(e.key==='Enter'&&!e.shiftKey?'enter':'key')}catch(_){}},true);");
@@ -160,8 +165,6 @@ public partial class MainWindow
                 if (m == "enter") _chatSentAt = DateTime.Now;
                 else if (m == "key") _chatTypedAt = DateTime.Now;
             };
-            core.Settings.AreDevToolsEnabled = false;
-            core.Settings.IsPasswordAutosaveEnabled = false;   // the chat window is not a password manager
             // a page in the chat can't drop a program, script or shortcut onto the PC
             core.DownloadStarting += (_, e) =>
             {
@@ -174,7 +177,6 @@ public partial class MainWindow
                     Dispatcher.BeginInvoke(() => ShowToast("\uE72E", L.T("Загрузка заблокирована"), L.F("Чат пытался скачать «{0}» — программы из чата не скачиваются", name)));
                 }
             };
-            core.Settings.AreHostObjectsAllowed = false;
             // never let a page start a program through a custom protocol (ms-..., file:, etc.)
             core.NavigationStarting += (_, e) =>
             {
@@ -183,7 +185,6 @@ public partial class MainWindow
                       || u.StartsWith("about:", StringComparison.OrdinalIgnoreCase) || u.StartsWith("data:", StringComparison.OrdinalIgnoreCase)))
                     e.Cancel = true;
             };
-            core.Settings.IsStatusBarEnabled = false;
             core.NewWindowRequested += (_, e) =>
             {
                 var uri = e.Uri ?? "";
@@ -209,6 +210,7 @@ public partial class MainWindow
                     _chat.Visibility = Visibility.Visible;
                     Reveal(_chat, 0.97, 0);
                 }
+                Services.WebViewHelper.SetActive(core, _mode == Mode.Expanded && TabChat.IsChecked == true);
             };
             core.Navigate(ChatUrl(_settings.ChatProvider));
         }
@@ -268,9 +270,8 @@ public partial class MainWindow
             var browserPid = (int)chat.CoreWebView2.BrowserProcessId;
             ChatHost.Children.Remove(chat);
             chat.Dispose();
-            // give the browser process a moment to flush and exit by itself
-            using var p = Process.GetProcessById(browserPid);
-            p.WaitForExit(2500);
+            // Wait only if Music WebView2 isn't still holding the shared browser process open.
+            if (_musicWeb == null) Services.WebViewHelper.WaitForExit(browserPid);
         }
         catch { /* the browser process has already exited */ }
     }

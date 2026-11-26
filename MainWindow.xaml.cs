@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -2920,7 +2920,7 @@ public partial class MainWindow : Window
                         Application.Current.Shutdown();
                         return;
                     }
-                    long WebMb() => (_musicWeb?.CoreWebView2?.Environment.GetProcessInfos().Sum(i => { try { using var p = System.Diagnostics.Process.GetProcessById(i.ProcessId); return p.PrivateMemorySize64; } catch { return 0L; } }) ?? 0) / 1048576;
+                    long WebMb() => WebViewHelper.TotalWebViewMb(_musicWeb?.CoreWebView2);
                     void Say(string what) => Log.Write($"musicplayer: {what}: shown [{_lastMedia?.SourceApp}|{_lastMedia?.AppId}|{_lastMedia?.Title}|{_lastMedia?.Artist}|art {_lastMedia?.Art != null}] playing {_lastMedia?.IsPlaying} pos {_lastMedia?.CurrentPosition.TotalSeconds:0.0} of {_lastMedia?.Duration.TotalSeconds:0.0}, own player {_player.Playing} at {_player.Position.TotalSeconds:0.0}, web audio {_musicWeb?.CoreWebView2?.IsDocumentPlayingAudio}, lyrics {_currentLyrics?.Lines.Count ?? 0}, {Environment.WorkingSet / 1048576} MB + web {WebMb()} MB");
                     await Task.Delay(_musicWeb != null ? 12000 : 9000); Say("started");
                     if (_musicWeb?.CoreWebView2 is { } site)
@@ -3868,6 +3868,7 @@ public partial class MainWindow : Window
         MorphTo(TargetSize(mode));
         UpdateEyesVisibility();
         ApplyGlass();
+        UpdateWebViewsMemoryState();
     }
 
     private void Expand()
@@ -3967,6 +3968,7 @@ public partial class MainWindow : Window
         else if (TabTimer.IsChecked == true) RenderTimer();
         else if (TabSystem.IsChecked == true) _ = RefreshSystemAsync(full: true);
         else if (TabWidgets.IsChecked == true) RenderWidgetsPage();
+        UpdateWebViewsMemoryState();
         Remeasure();
     }
 
@@ -4074,7 +4076,8 @@ public partial class MainWindow : Window
     {
         for (var d = e.OriginalSource as DependencyObject; d != null && d != Island; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
         {
-            if (d is Slider or ComboBox or TextBoxBase or Views.EqView) return;
+            if (d is Slider or ComboBox or TextBoxBase or Views.EqView
+                or Microsoft.Web.WebView2.Wpf.WebView2CompositionControl or Microsoft.Web.WebView2.Wpf.WebView2) return;
             if (d is ScrollViewer sv && (sv.ScrollableHeight > 0.5 || sv.ScrollableWidth > 0.5)) return;
         }
         e.Handled = true;

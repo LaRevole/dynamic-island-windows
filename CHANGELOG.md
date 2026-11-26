@@ -5,10 +5,10 @@ All notable changes to Atoll (formerly "Dynamic Island for Windows"). Русск
 ## 2.2.1 — 2026-11-27
 
 - **Fork sync & native AIMP support:** synced with upstream Atoll 2.2.0 and merged native AIMP Remote API (`AIMP2_RemoteInfo`) integration (`feat/aimp-remote-support`) for real-time track metadata, playback state, and controls without external AIMP plugins.
-- **Yandex Music built-in web player:** added `Яндекс Музыка` (`https://music.yandex.ru/`) as a Music tab source with Yandex ID sign-in pop-up allowlist (`yandex.ru`, `yandex.com`, `ya.ru`), localized source attribution, and automatic recovery if a WebView2 media session recreates on reload.
+- **Yandex Music & WebView2 improvements:** added `Яндекс Музыка` (`https://music.yandex.ru/`) as a Music tab source with Yandex ID sign-in pop-up allowlist (`yandex.ru`, `yandex.com`, `ya.ru`), localized source attribution, stale SMTC session recovery, mouse-wheel scrolling + visible vertical scrollbars inside embedded websites, and shared/low-memory/auto-suspend WebView2 lifecycle management.
 
 - **Синхронизация форка и нативная поддержка AIMP:** база обновлена до Atoll 2.2.0, вмержена нативная интеграция с AIMP Remote API (`AIMP2_RemoteInfo`) из ветки `feat/aimp-remote-support` — отображение трека, состояния воспроизведения и управление без сторонних плагинов AIMP.
-- **Яндекс Музыка во встроенном плеере:** добавлен источник `Яндекс Музыка` (`https://music.yandex.ru/`) во вкладку «Музыка» с поиском и разделом «Коллекция», поддержкой окон входа Яндекс ID (`yandex.ru`, `yandex.com`, `ya.ru`), локализованным именем плеера и восстановлением зависших WebView2-сессий.
+- **Яндекс Музыка и оптимизация WebView2:** добавлен источник `Яндекс Музыка` (`https://music.yandex.ru/`) во вкладку «Музыка» с поиском и разделом «Коллекция», поддержкой окон входа Яндекс ID (`yandex.ru`, `yandex.com`, `ya.ru`), локализованным именем плеера, восстановлением зависших WebView2-сессий, прокруткой колёсиком мыши и боковым вертикальным скроллбаром на сайтах, а также снижением потребления памяти WebView2 (единый профиль процесса, `Low` memory target и авто-приостановка при простое).
 
 ## 2.2.0 — 2026-11-26
 

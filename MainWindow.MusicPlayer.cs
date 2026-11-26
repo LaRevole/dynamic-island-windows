@@ -27,7 +27,8 @@ public partial class MainWindow
     private int _musicSearch;
     private DateTime _musicPlayedAt = DateTime.Now;
     private readonly System.Windows.Threading.DispatcherTimer _musicIdleTimer = new() { Interval = TimeSpan.FromSeconds(30) };
-    private static readonly TimeSpan MusicIdle = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan MusicSuspendAfter = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan MusicIdle = TimeSpan.FromMinutes(3);
 
     private bool MusicSiteShown => _musicWeb != null && _musicSource == _musicSite && !_musicFullView;
 
@@ -75,8 +76,21 @@ public partial class MainWindow
         MusicFull.Visibility = site ? Visibility.Collapsed : Visibility.Visible;
         MusicBar.Visibility = MusicWebFrame.Visibility = site ? Visibility.Visible : Visibility.Collapsed;
         MusicPage.Width = site ? 760 : 720;
+        UpdateWebViewsMemoryState();
         RefreshMusicButtons();
         RemeasureMusic();
+    }
+
+    /// <summary>Keep hidden/folded WebView2 renderers in Low memory mode while allowing active playback.</summary>
+    private void UpdateWebViewsMemoryState()
+    {
+        bool musicVisible = _mode == Mode.Expanded && TabMusic.IsChecked == true && MusicSiteShown;
+        if (musicVisible) _musicPlayedAt = DateTime.Now;
+        WebViewHelper.SetActive(_musicWeb?.CoreWebView2, musicVisible);
+
+        bool chatVisible = _mode == Mode.Expanded && TabChat.IsChecked == true;
+        if (chatVisible) _chatSeenAt = DateTime.Now;
+        WebViewHelper.SetActive(_chat?.CoreWebView2, chatVisible);
     }
 
     private void RefreshMusicButtons()
@@ -270,6 +284,7 @@ public partial class MainWindow
         _musicStartUrl = url;
         if (_musicWeb != null)
         {
+            WebViewHelper.SetActive(_musicWeb.CoreWebView2, true);
             _musicWeb.CoreWebView2?.Navigate(url);   // null: still starting, it goes to _musicStartUrl
             ShowMusicPart();
             return;
@@ -284,19 +299,16 @@ public partial class MainWindow
         _musicIdleTimer.Start();
         try
         {
-            // test runs have a profile of their own: the user's sign-ins stay out of them
-            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", App.TestRun ? "WebView2MusicTest" : "WebView2Music");
-            var env = await CoreWebView2Environment.CreateAsync(null, dataDir);
+            var env = await WebViewHelper.GetEnvironmentAsync();
             if (_musicWeb != web) return;   // closed meanwhile
             await web.EnsureCoreWebView2Async(env);
             if (_musicWeb != web) return;
             web.ZoomFactor = 0.8;   // more of the page in the island
             var core = web.CoreWebView2;
-            core.Settings.AreDevToolsEnabled = false;
-            core.Settings.AreHostObjectsAllowed = false;
+            WebViewHelper.ApplyLeanSettings(core.Settings);
             core.Settings.IsWebMessageEnabled = false;
-            core.Settings.IsPasswordAutosaveEnabled = false;
-            core.Settings.IsStatusBarEnabled = false;
+            await WebViewHelper.InstallVisibleScrollbarsAsync(core);
+            if (_musicWeb != web) return;
             core.DownloadStarting += (_, e) => e.Cancel = true;
             core.PermissionRequested += (_, e) =>
             {
@@ -318,7 +330,12 @@ public partial class MainWindow
                 SafeShell.OpenUrl(u);
             };
             core.IsDocumentPlayingAudioChanged += (_, _) => { if (core.IsDocumentPlayingAudio) _player.Pause(); };
-            core.NavigationCompleted += (_, _) => { MusicWebNote.Visibility = Visibility.Collapsed; web.Visibility = Visibility.Visible; };
+            core.NavigationCompleted += (_, _) =>
+            {
+                MusicWebNote.Visibility = Visibility.Collapsed;
+                web.Visibility = Visibility.Visible;
+                WebViewHelper.SetActive(core, _mode == Mode.Expanded && TabMusic.IsChecked == true && MusicSiteShown);
+            };
             core.ProcessFailed += (_, e) =>
             {
                 Log.Write("music: web: " + e.ProcessFailedKind);
@@ -350,15 +367,22 @@ public partial class MainWindow
         if (!_shutDown) ShowMusicPart();
     }
 
-    /// <summary>Nothing has played for five minutes: free the memory. A site the user is looking at stays.</summary>
+    /// <summary>Trim/suspend silent hidden sites quickly, then close after idle to free memory.</summary>
     private void ReleaseIdleMusic()
     {
-        if (_player.Playing || _musicWeb?.CoreWebView2?.IsDocumentPlayingAudio == true || (_mode == Mode.Expanded && MusicWebHost.IsVisible))
+        bool activeView = _mode == Mode.Expanded && TabMusic.IsChecked == true && MusicWebHost.IsVisible;
+        if (_player.Playing || _musicWeb?.CoreWebView2?.IsDocumentPlayingAudio == true || activeView)
         {
             _musicPlayedAt = DateTime.Now;
             return;
         }
-        if (DateTime.Now - _musicPlayedAt < MusicIdle) return;
+        var idle = DateTime.Now - _musicPlayedAt;
+        if (idle >= MusicSuspendAfter && idle < MusicIdle)
+        {
+            _ = WebViewHelper.TrySuspendIfIdleAsync(_musicWeb?.CoreWebView2);
+            return;
+        }
+        if (idle < MusicIdle) return;
         _musicIdleTimer.Stop();
         _player.Close();
         CloseMusicSite();
@@ -368,10 +392,10 @@ public partial class MainWindow
     {
         _musicIdleTimer.Stop();
         _player.Close();
-        Process? browser = null;
-        try { if (_musicWeb?.CoreWebView2 is { } core) browser = Process.GetProcessById((int)core.BrowserProcessId); }
+        int? browserPid = null;
+        try { if (_musicWeb?.CoreWebView2 is { } core) browserPid = (int)core.BrowserProcessId; }
         catch (Exception ex) { Log.Write("music: shutdown: " + ex.GetType().Name); }
         CloseMusicSite();
-        using (browser) browser?.WaitForExit(2500);   // let it write its cookies
+        if (_chat == null) WebViewHelper.WaitForExit(browserPid);   // let it write its cookies
     }
 }
