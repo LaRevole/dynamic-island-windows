@@ -331,7 +331,7 @@ public partial class MainWindow
             Log.Write("music: web: " + ex.GetType().Name + ": " + ex.Message);
             if (_musicWeb != web) return;
             CloseMusicSite();
-            ShowToast("", L.T("Не удалось включить"), site.Name);
+            ShowToast("", L.T("Не удалось включить"), site.ToString());
         }
     }
 

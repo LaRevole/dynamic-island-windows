@@ -153,6 +153,21 @@ public sealed class MediaService : IDisposable
         var aimp = _aimp.Current;
         bool aimpHasTrack = _aimp.IsConnected && aimp is { HasTrack: true };
 
+        // A web player can recreate its SMTC session on reload/navigation; drop the stale one so we re-attach to the live session.
+        if (_manager != null && _session != null && _appId.Length > 0 && !_useAimp)
+        {
+            try
+            {
+                if (_manager.GetSessions().All(s => s.SourceAppUserModelId != _appId))
+                {
+                    var alive = _manager.GetCurrentSession();
+                    if (alive != null && !(aimpHasTrack && IsAimpSmtc(alive.SourceAppUserModelId))) Attach(alive);
+                    else Attach(null);
+                }
+            }
+            catch (Exception ex) { Log.Write("media: stale: " + ex.GetType().Name); }
+        }
+
         if (_chosen.Length == 0)
         {
             if (!_useAimp && aimpHasTrack && (aimp!.IsPlaying && (!_playing || IsAimpSmtc(_appId)) || _session == null || IsAimpSmtc(_appId)))
@@ -566,7 +581,7 @@ public sealed class MediaService : IDisposable
     public static string PrettyAppName(string aumid)
     {
         if (string.IsNullOrEmpty(aumid)) return "";
-        if (aumid.StartsWith("msedgewebview2", StringComparison.OrdinalIgnoreCase) && WebPlayerName.Length > 0) return WebPlayerName;
+        if (aumid.StartsWith("msedgewebview2", StringComparison.OrdinalIgnoreCase) && WebPlayerName.Length > 0) return L.T(WebPlayerName);
         if (IsOwn(aumid)) return "Atoll";
         // the Yandex Music app ("ru.yandex.desktop.music") and its old Store version ("A025C540.Yandex.Music_…!App")
         if (aumid.Contains("yandex", StringComparison.OrdinalIgnoreCase) && aumid.Contains("music", StringComparison.OrdinalIgnoreCase))
