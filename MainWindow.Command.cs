@@ -157,6 +157,9 @@ public partial class MainWindow
         (["qr", "куар", "код"], L.T("QR-код с экрана"), "", () => _ = RunAction("qr")),
         (["пипетка", "цвет", "color", "picker"], L.T("Пипетка"), "", () => _ = RunAction("picker")),
         (["запись", "record", "видео"], _recording.IsRecording ? L.T("Остановить запись экрана") : L.T("Запись экрана"), "", () => _ = RunAction("record")),
+        (["диктофон", "голос", "voice", "dictaphone"], L.T("Диктофон"), "", () => OpenTab(TabVoice)),
+        (["запись голоса", "начать запись голоса", "voice record"], _voiceRec.IsRecording ? L.T("Остановить диктофон") : L.T("Запись голоса (диктофон)"), "", () => _ = RunAction("voice")),
+        (["перевод", "перевести", "translate"], L.T("Перевести выделенный текст"), "", () => _ = TranslateSelectionAsync()),
         (["чистый текст", "очистить текст", "plain"], L.T("Чистый текст в буфере"), "", () => _ = RunAction("cleantext")),
         (["тема", "theme", "светлая", "тёмная", "темная"], L.T("Сменить тему"), "", ToggleTheme),
         (["выровнять", "центр", "align", "center"], L.T("Выровнять по центру"), "", AlignIsland),
@@ -175,7 +178,7 @@ public partial class MainWindow
         (["не беспокоить", "фокус", "focus", "dnd"], FocusMode.IsOn ? L.T("Выключить «Не беспокоить»") : L.T("Не беспокоить на 1 час"), "",
             () => { if (FocusMode.IsOn) FocusMode.End(); else FocusMode.Start(TimeSpan.FromHours(1)); }),
         (["микрофон", "mute", "mic"], _audio.MicMuted == true ? L.T("Включить микрофон") : L.T("Выключить микрофон"), "",
-            () => _audio.MicMuted = !(_audio.MicMuted ?? false)),
+            ToggleMicMute),
     ];
 
     private List<CommandItem> BuildCommands(string query)

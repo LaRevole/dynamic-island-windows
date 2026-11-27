@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -96,7 +96,7 @@ public partial class MainWindow
         // everything that wants the pill right now, most important first; the mouse wheel over the
         // pill switches between them (a Discord call and the music, a timer and a download…)
         var lives = new List<(string Id, string? Icon, string? Text, double Ring, Brush Brush)>();
-        if (!_recording.IsRecording)   // recording owns the pill (red dot + elapsed, see OnTick)
+        if (!_recording.IsRecording && !_voiceRec.IsRecording)   // recording owns the pill (red dot + elapsed, see OnTick)
         {
             if (_gameMode && _stats.Last is { } gs)
             {
@@ -471,10 +471,25 @@ public partial class MainWindow
         }
     }
 
-    private void MicMute_Click(object sender, RoutedEventArgs e)
+    private void MicMute_Click(object sender, RoutedEventArgs e) => ToggleMicMute();
+
+    private void ToggleMicMute()
     {
-        _audio.MicMuted = !(_audio.MicMuted ?? false);
-        ShowToastIfCompact(_audio.MicMuted == true ? "" : "", _audio.MicMuted == true ? L.T("Микрофон выключен") : L.T("Микрофон включён"));
+        if (_audio.MicMuted is not bool current)
+        {
+            ShowKeyPill("\uE720", L.T("Микрофон не найден"), null, null, kind: "mic");
+            return;
+        }
+        bool muted = !current;
+        _audio.MicMuted = muted;
+        ShowKeyPill(
+            muted ? "\uEC54" : "\uE720",
+            muted ? L.T("Микрофон выключен") : L.T("Микрофон включён"),
+            "Ctrl+Alt+M",
+            muted ? Color.FromRgb(0xFF, 0x45, 0x3A) : Color.FromRgb(0x30, 0xD1, 0x58),
+            kind: "mic");
+        UpdateDiscordPill();
+        UpdateMicMuteBadge();
         _ = RefreshSystemAsync(false);
     }
 

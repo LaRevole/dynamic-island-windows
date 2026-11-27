@@ -56,7 +56,7 @@ public partial class MainWindow
     }
 
     private bool ConfirmPower(string question) =>
-        MessageBox.Show(this, question, "Atoll", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+        MessageBox.Show(this, question, "LeFleur Atoll", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
 
     private void AddToggle(string id, string glyph, string label, Color on, Func<Task> click)
     {

@@ -19,6 +19,9 @@ public partial class MainWindow
 
     private static readonly ThemePreset[] BuiltInThemes =
     [
+        // LeFleur minimalist presets: soft iridescent floral light & dark crimson-turquoise LaRCorp
+        new("lefleur_light", "LeFleur · Светлая", false, "#F3B4CE", "#E03E7B", "lefleur_bloom"),
+        new("lefleur_larcorp", "LeFleur · LaRCorp", true, "#1A080C", "#14D4C4", "larcorp"),
         // liquid glass: clear frosted glass that bends what's behind it at the edges (like iOS)
         new("liquid", "Жидкое стекло", true, "#0B0B14", "#B9A4FF", "none", "liquid"),
         // what is behind shows through as it is / through strongly frosted glass
@@ -107,12 +110,23 @@ public partial class MainWindow
         _settings.Aura = t.Aura;
         _settings.Scene = t.Scene;
         if (IsGlassScene(t.Scene)) _settings.Glass = true;   // a glass theme is glass
+        if (t.Id.StartsWith("lefleur_", StringComparison.Ordinal))
+        {
+            // LeFleur minimalist preset: clean pill without animated mascot, waves, or heavy screen-grab glass
+            _settings.Character = "none";
+            Character.Kind = "none";
+            _settings.MusicWaves = false;
+            _settings.Glass = false;
+            MusicWavesSwitch.IsChecked = false;
+            BuildCharacterGallery();
+        }
         _settings.Save();
         ApplyScene();
         ApplyTheme();
         ApplyThemeLocal();
         ApplyGlass();
         SetupAura();
+        RefreshLookControls();
         DarkSwitch.IsChecked = _settings.DarkTheme;
         ColorBox.Text = _settings.IslandColor;
         BuildThemeGallery();

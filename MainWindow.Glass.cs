@@ -39,6 +39,8 @@ public partial class MainWindow
     public static readonly (string Id, string Name, string[] Colors)[] Auras =
     [
         ("none", L.T("Нет"), []),
+        ("lefleur_bloom", L.T("LeFleur · Цветение"), ["#FF85B3", "#FFB8D9", "#D8B4FE", "#F472B6"]),
+        ("larcorp", L.T("LaRCorp"), ["#7F1D1D", "#C81E3A", "#14B8A6", "#2DD4BF"]),
         ("aurora", L.T("Аврора"), ["#5B8CFF", "#A066FF", "#3DE1FF"]),
         ("sunset", L.T("Закат"), ["#FF6B6B", "#FFB347", "#FF5E9C"]),
         ("ocean", L.T("Океан"), ["#00C6FF", "#0072FF", "#00E0B0"]),
@@ -684,7 +686,7 @@ public partial class MainWindow
     private void UpdateAuraVisibility()
     {
         // never over a game or a full-screen video: the glow would cost frames there
-        bool show = _auraBrush != null && !Lite && _mode == Mode.Compact && !_recording.IsRecording && !_gameMode && !_fullscreenHidden && !_hidden;
+        bool show = _auraBrush != null && !Lite && _mode == Mode.Compact && !_recording.IsRecording && !_voiceRec.IsRecording && !_gameMode && !_fullscreenHidden && !_hidden;
         if (show && _auraPaused) { _auraPaused = false; SetupAura(); return; }   // starts the glow again
         if (!show && _auraBrush != null && !_auraPaused)
         {

@@ -151,9 +151,12 @@ public partial class MainWindow
         return false;
     }
 
+    private bool _suppressClipboard;
+
     private async Task OnClipboardChanged()
     {
         UiStep("clipboard");
+        if (_suppressClipboard) return;
         if (IsPrivateClip()) return;
         _copiedAt = DateTime.Now;   // the smart island opens on the clipboard right after you copy
         ClipItem? item = null;

@@ -15,7 +15,7 @@ namespace DynamicIsland.Services;
 /// </summary>
 public static class Updater
 {
-    public const string Repo = "Fuwni/dynamic-island-windows";
+    public const string Repo = "LaRevole/dynamic-island-windows";
     public static string ReleasesPage => $"https://github.com/{Repo}/releases/latest";
 
     public sealed record UpdateInfo(Version Version, string Tag, string? SetupUrl, long SetupSize, string? Sha256, string PageUrl);
@@ -25,7 +25,7 @@ public static class Updater
     private static HttpClient CreateClient()
     {
         var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("Atoll-Updater");   // GitHub requires a user agent; nothing personal in it
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("LeFleur-Atoll-Updater");   // GitHub requires a user agent; nothing personal in it
         http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return http;
     }

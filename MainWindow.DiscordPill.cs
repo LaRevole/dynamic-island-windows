@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -27,13 +27,14 @@ public partial class MainWindow
     /// <summary>Every 250 ms (from UpdateLive): show, update or hide the call island.</summary>
     private void UpdateDiscordPill()
     {
-        bool want = _discordInCall && _settings.ShowDiscordCall && DiscordBeside && !_hidden && !_fullscreenHidden && !_recording.IsRecording && IsLoaded;
+        bool want = _discordInCall && _settings.ShowDiscordCall && DiscordBeside && !_hidden && !_fullscreenHidden && !_recording.IsRecording && !_voiceRec.IsRecording && IsLoaded;
         // the call's length counts from when the call started, not from when the little island last appeared
         if (_discordInCall && !_callWasOn) _callSince = DateTime.Now;
         _callWasOn = _discordInCall;
         if (!want)
         {
             if (_callShown) FadeCallPill(false);
+            UpdateMicMuteBadge();
             return;
         }
         EnsureCallPill();
@@ -45,15 +46,35 @@ public partial class MainWindow
         _callMic.ToolTip = muted ? L.T("Включить микрофон") : L.T("Выключить микрофон");
         _callTalkRing!.Opacity = _discordSpeaking ? 0.55 + 0.45 * Math.Sin(_tickCount * 0.9) : 0;
 
-        if (!PlaceBeside(_callPill!, 0)) { if (_callShown) FadeCallPill(false); return; }
+        if (!PlaceBeside(_callPill!, 0)) { if (_callShown) FadeCallPill(false); UpdateMicMuteBadge(); return; }
         if (!_callShown) FadeCallPill(true);
+        UpdateMicMuteBadge();
+    }
+
+    /// <summary>Permanent circular mic-muted badge inside the island pill so it moves seamlessly with karaoke/springs.</summary>
+    private void UpdateMicMuteBadge()
+    {
+        bool want = _settings.ShowMicMuteDot && _audio.MicMuted == true && !_recording.IsRecording && !_voiceRec.IsRecording;
+        var vis = want ? Visibility.Visible : Visibility.Collapsed;
+        if (MicMuteBadge.Visibility == vis) return;
+        MicMuteBadge.Visibility = vis;
+        if (_mode == Mode.Compact && IsLoaded) MorphTo(TargetSize(Mode.Compact));
+    }
+
+    private void MicMuteBadge_Click(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        ToggleMicMute();
     }
 
     private void EnsureCallPill()
     {
         if (_callPill != null) return;
-        _sideLayer = new Canvas();
-        Root.Children.Add(_sideLayer);
+        if (_sideLayer == null)
+        {
+            _sideLayer = new Canvas();
+            Root.Children.Add(_sideLayer);
+        }
 
         var icon = new TextBlock { Text = "", FontFamily = (FontFamily)FindResource("IconFont"), FontSize = 13, Foreground = Brushes.White,
                                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -102,28 +123,28 @@ public partial class MainWindow
     /// Put a little island to the right of the main one, level with its top (the folded pill's height).
     /// skip: room already taken by other side islands. False when there's no room (a wide open island).
     /// </summary>
-    private bool PlaceBeside(FrameworkElement e, double skip)
+    private bool PlaceBeside(FrameworkElement e, double skip, bool allowLeftFallback = false)
     {
         e.LayoutTransform = Island.LayoutTransform;   // same size setting as the island
         e.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var size = e.DesiredSize;
-        // a hidden element measures as nothing, "fits", gets shown, measures its real size, doesn't fit, gets
-        // hidden… — that loop was the blinking. Remember the real size and judge by it.
         if (size.Width < 1 && e.Tag is Size known) size = known; else if (size.Width >= 1) e.Tag = size;
         var tl = Island.TranslatePoint(new Point(0, 0), Root);
-        // beside where the island WILL be, not where it is this frame: while it opens its width swings past
-        // the final size and back, and a place worked out from that made the little island blink
-        // (the island is centred in its window, and the window's width doesn't change: nothing here moves by a
-        // fraction of a pixel from frame to frame, so "is there room" gets one answer for the whole opening)
         double final = (_mode == Mode.Compact ? Island.ActualWidth : Math.Max(_w.Target, 1)) * UiScale;
         double x = Math.Round(Root.ActualWidth / 2 + final / 2) + 10 + skip;
-        if (x + size.Width > Root.ActualWidth - 4) return false;
+        if (x + size.Width > Root.ActualWidth - 4)
+        {
+            if (!allowLeftFallback) return false;
+            double leftX = Math.Round(Root.ActualWidth / 2 - final / 2) - 10 - size.Width;
+            if (leftX < 4) return false;
+            x = leftX;
+        }
         double pillH = 36 * UiScale;
         Canvas.SetLeft(e, x);
         Canvas.SetTop(e, tl.Y + Math.Max(0, (pillH - size.Height) / 2));
         return true;
     }
 
-    /// <summary>Width the call island takes beside the main one (so the Caps Lock pill goes after it).</summary>
+    /// <summary>Width the side badges take beside the main pill (so the Caps Lock / Mic pill goes after them).</summary>
     private double SideTaken => _callShown && _callPill != null ? _callPill.DesiredSize.Width + 8 : 0;
 }

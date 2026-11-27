@@ -190,9 +190,9 @@ public partial class MainWindow
     // ================================================================ tabs: order and which ones are shown
 
     private static readonly string[] DefaultTabOrder =
-        ["TabHome", "TabMusic", "TabWeather", "TabChat", "TabTimer", "TabClip", "TabNotes", "TabCalendar", "TabSystem", "TabWidgets"];
+        ["TabHome", "TabMusic", "TabWeather", "TabChat", "TabTimer", "TabClip", "TabNotes", "TabCalendar", "TabSystem", "TabVoice", "TabWidgets"];
 
-    private RadioButton[] AllPageTabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets];
+    private RadioButton[] AllPageTabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabVoice, TabWidgets];
 
     private RadioButton[]? _pageTabs;
 
@@ -440,7 +440,7 @@ public partial class MainWindow
     {
         if (_hidden || _fullscreenHidden) { _idleDim = null; return; }
         bool dim = _settings.IdleOpacity < 100 && _mode == Mode.Compact && !Island.IsMouseOver && !_editMode && !_dragging
-                   && _reach.Target < 0.02 && !_recording.IsRecording && _demoMedia == null;
+                   && _reach.Target < 0.02 && !_recording.IsRecording && !_voiceRec.IsRecording && _demoMedia == null;
         if (dim == _idleDim) return;
         _idleDim = dim;
         Fade(Island, dim ? Math.Clamp(_settings.IdleOpacity, 30, 100) / 100.0 : 1, dim ? 600 : 160, dim ? 900 : 0);

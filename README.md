@@ -4,9 +4,9 @@
 
 <img src="docs/screenshots/en/compact-music.png" width="420" alt="Atoll in its compact state">
 
-# Atoll
+# LeFleur Atoll
 
-### The Dynamic Island–style island for Windows
+### Minimalist, practical Dynamic Island–style island for Windows (based on Atoll)
 
 **The iPhone "island", reimagined for your PC.**
 Music with live lyrics, weather, timers, screenshots with OCR and translation, an AI chat, clipboard history,
@@ -14,7 +14,7 @@ notes, a calendar, notifications and a little character that lives in the pill �
 
 **English** · [Русский](README.ru.md)
 
-[![Download](https://img.shields.io/github/v/release/Fuwni/dynamic-island-windows?label=Download&style=for-the-badge&color=30D158)](https://github.com/Fuwni/dynamic-island-windows/releases/latest)
+[![Download](https://img.shields.io/github/v/release/LaRevole/dynamic-island-windows?label=Download&style=for-the-badge&color=30D158)](https://github.com/LaRevole/dynamic-island-windows/releases/latest)
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0A84FF?style=for-the-badge&logo=windows)
 ![.NET 10](https://img.shields.io/badge/.NET-10-5E5CE6?style=for-the-badge&logo=dotnet)
 [![MIT License](https://img.shields.io/badge/license-MIT-8E8E93?style=for-the-badge)](LICENSE)
@@ -30,7 +30,8 @@ notes, a calendar, notifications and a little character that lives in the pill �
 
 ## Contents
 
-- [Fork additions (2.2.1)](#fork-additions-221)
+- [Fork additions & v2.3.0 update](#fork-additions-230)
+- [How updates work](#updates)
 - [What's new in 1.8](#whats-new-in-18)
 - [Features](#features)
 - [Install (2 minutes, no admin rights)](#install)
@@ -44,12 +45,19 @@ notes, a calendar, notifications and a little character that lives in the pill �
 
 ---
 
-## Fork additions (2.2.1)
+<a id="fork-additions-230"></a>
+## Fork additions & v2.3.0 update
 
-Forked from [Fuwni/dynamic-island-windows](https://github.com/Fuwni/dynamic-island-windows) (`v2.2.0` — edges, side/taskbar placement, tab wheel) with a focus on practical daily use, native players and lower memory footprint:
+Forked from [Fuwni/dynamic-island-windows](https://github.com/Fuwni/dynamic-island-windows) (`v2.2.0` — edges, side/taskbar placement, tab wheel) and maintained at [LaRevole/dynamic-island-windows](https://github.com/LaRevole/dynamic-island-windows) with a focus on practical daily use, native players, privacy/productivity helpers and lower memory footprint:
 
 - 🎧 **Native AIMP Remote API (`AIMP2_RemoteInfo`) support** ([Services/AimpRemote.cs](Services/AimpRemote.cs)): real-time track metadata (title, artist, album, cover art, duration), playback state, seek, repeat and controls without external AIMP plugins.
 - 🎵 **Built-in Yandex Music web player** (`https://music.yandex.ru/`): added to the Music tab with search, Collection (`/collection`), in-island Yandex ID sign-in pop-ups (`yandex.ru`, `yandex.com`, `ya.ru`), localized source attribution and stale SMTC session recovery.
+- 🌸 **LeFleur minimalist presets** ([MainWindow.Themes.cs](MainWindow.Themes.cs)): two clean presets in Settings → Appearance (disabling mascots, waves and glass capture for minimal distraction): **LeFleur · Светлая** (floral pink with iridescent bloom shimmer) and **LeFleur · LaRCorp** (deep dark-red + turquoise), toggled via `Ctrl+Alt+T`.
+- 🎙️ **Global mic mute (`Ctrl+Alt+M`) & permanent muted badge**: mutes all active Windows capture devices (so both `Default Multimedia` and `Default Communications`, e.g. Discord, mute together) and keeps a clickable circular mic-off badge inside the pill while muted.
+- 🌐 **Selected-text translation (`Ctrl+Shift+T` / `Ctrl+Alt+Y`)** ([MainWindow.Translate.cs](MainWindow.Translate.cs)): reads selected text via UI Automation or scan-code `Ctrl+C` without polluting clipboard history, restores previous clipboard text, auto-translates and opens a compact card with **Copy** and **Save to Notes**.
+- 🗣️ **Voice Recorder tab (`TabVoice`, `Ctrl+Shift+R`)** ([Services/VoiceRecorder.cs](Services/VoiceRecorder.cs), [MainWindow.VoiceRecorder.cs](MainWindow.VoiceRecorder.cs)): 48 kHz WAV recording to `Documents\LeFleur Atoll\Voice` with live timer, mic level meter, muted-mic warning and saved-clips playback inside Atoll.
+- 🎨 **Custom LeFleur Atoll icon** ([Views/BrandArt.cs](Views/BrandArt.cs)): regenerated `Assets/icon.ico` and `docs/icon.png` in the obsidian-crimson, floral-rose & turquoise palette.
+- 🔄 **Independent fork self-updates** ([Services/Updater.cs](Services/Updater.cs)): built-in update checks and 1-click installer updates now track `LaRevole/dynamic-island-windows` releases instead of upstream.
 - 🖱️ **Fixed WebView2 scrolling & visible vertical scrollbar** ([Services/WebViewHelper.cs](Services/WebViewHelper.cs)): mouse wheel scrolls inside embedded websites (Music and Chat) instead of switching island tabs, plus a visible vertical scrollbar for sites that hide it.
 - ⚡ **Memory & resource optimizations:**
   - **Shared WebView2 environment** (`WebView2`) for Music and Chat (one Chromium process tree instead of two), bounded caches (`32 MB` disk / `16 MB` media), `--process-per-site`, `--renderer-process-limit=2`, `Low` memory target + paused decorative CSS animations while folded, `20 s` auto-suspend when silent and `90 s` idle unload.
@@ -189,7 +197,7 @@ drag the island anywhere or **flick it up** to hide it; it hides itself in games
 
 **Installer (recommended)**
 
-1. Open **[Releases](https://github.com/Fuwni/dynamic-island-windows/releases/latest)** and download **`DynamicIsland-…-setup.exe`**.
+1. Open **[Releases](https://github.com/LaRevole/dynamic-island-windows/releases/latest)** and download **`Atoll-…-setup.exe`**.
 2. Run it. It installs just for you (no admin rights), adds Atoll to the Start menu and can start it with Windows.
 3. Windows may show a blue **"Windows protected your PC"** window because the app isn't signed with a paid certificate.
    Click **More info → Run anyway**. You only need to do this once.
@@ -206,7 +214,12 @@ drag the island anywhere or **flick it up** to hide it; it hides itself in games
 | Microsoft Edge WebView2 Runtime | the Chat page | already in Windows 11; otherwise [download](https://developer.microsoft.com/microsoft-edge/webview2/) |
 | Visual C++ Redistributable 2015–2022 (x64) | screen recording | usually installed; otherwise [download](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 
-**Update:** run the new setup over the old one. Your settings are kept.
+<a id="updates"></a>
+**Updates (automatic & manual):**
+- **Automatic check:** LeFleur Atoll checks **[LaRevole/dynamic-island-windows](https://github.com/LaRevole/dynamic-island-windows/releases)** once after startup and every 6 hours (can be toggled in **Settings → Behavior → Updates**).
+- **Installer copies:** clicking the update notification or **Update** downloads `Atoll-…-setup.exe` over HTTPS, verifies GitHub's SHA-256 digest and updates silently in place while keeping your settings and notes.
+- **Portable copies (`DynamicIsland-win-x64.zip`):** open the release page to download the new archive and extract it over your existing folder.
+- **Manual installer upgrade:** run the new setup over the old one — your settings are kept.
 
 **Uninstall (10 seconds):** **Settings → Behavior → Uninstall Atoll**, or Windows **Settings → Apps → Installed apps → Atoll → Uninstall**.
 It removes the app, its Start-menu entry, autostart and Claude Code hooks, and asks whether to delete your settings, notes and chat logins too.
@@ -234,7 +247,10 @@ The same button works for the portable version: it cleans up and deletes its own
 | `Ctrl` + `Alt` + `I` | show / hide the island |
 | `Ctrl` + `Alt` + `S` | screenshot of a region |
 | `Ctrl` + `Alt` + `R` | start / stop screen recording |
-| `Ctrl` + `Alt` + `T` | dark ↔ light theme |
+| `Ctrl` + `Alt` + `T` | dark ↔ light / LeFleur theme |
+| `Ctrl` + `Alt` + `M` | mute / unmute all microphones |
+| `Ctrl` + `Shift` + `T` / `Ctrl` + `Alt` + `Y` | translate selected text |
+| `Ctrl` + `Shift` + `R` | toggle Voice Recorder |
 | `Alt` + `Space` or `Ctrl` + `Alt` + `Space` | command bar (another shortcut or none: Settings → Behavior) |
 
 In the screenshot editor: `Ctrl+Z` undo, `Ctrl+C` copy, `Ctrl+S` save, `Esc` close.

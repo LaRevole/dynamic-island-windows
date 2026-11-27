@@ -235,7 +235,7 @@ public partial class MainWindow
     private string PerfReport()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Atoll {Updater.Current} · Windows {Environment.OSVersion.Version}");
+        sb.AppendLine($"LeFleur Atoll {Updater.Current} · Windows {Environment.OSVersion.Version}");
         sb.AppendLine("Smoothness: " + PerfSummary());
         sb.AppendLine($"Graphics: {string.Join(" + ", Native.GraphicsCards())} · WPF tier {RenderCapability.Tier >> 16}");
         sb.AppendLine($"CPU threads: {Environment.ProcessorCount}");

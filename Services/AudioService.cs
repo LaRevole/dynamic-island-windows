@@ -162,25 +162,34 @@ public sealed class AudioService
         catch { return false; }
     }
 
-    private MMDevice? _mic;
+    private readonly List<MMDevice> _mics = [];
+    private readonly HashSet<string> _mutedByUs = new(StringComparer.OrdinalIgnoreCase);
     private DateTime _micAt;
 
-    /// <summary>The default microphone, kept (and the old one freed) like <see cref="Device"/>.</summary>
-    private MMDevice? Mic
+    private void ForgetMics()
     {
-        get
+        foreach (var m in _mics)
+            try { m.Dispose(); } catch (Exception ex) { Log.Error("audio: release mic", ex); }
+        _mics.Clear();
+    }
+
+    /// <summary>
+    /// All active capture endpoints (cached for 5 s, disposed on refresh like <see cref="Device"/>).
+    /// Windows and apps like Discord often use different mics for Default Multimedia vs Communications
+    /// or a user-picked device, so muting all active capture devices ensures the active mic actually mutes.
+    /// </summary>
+    private IReadOnlyList<MMDevice> CaptureDevices(bool forceRefresh = false)
+    {
+        if (!forceRefresh && _mics.Count > 0 && (DateTime.Now - _micAt).TotalSeconds <= 5) return _mics;
+        _micAt = DateTime.Now;
+        ForgetMics();
+        try
         {
-            if (_mic != null && (DateTime.Now - _micAt).TotalSeconds <= 5) return _mic;
-            _micAt = DateTime.Now;
-            try
-            {
-                var d = _enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
-                if (_mic != null && d.ID == _mic.ID) { d.Dispose(); return _mic; }
-                _mic?.Dispose();
-                return _mic = d;
-            }
-            catch { _mic?.Dispose(); return _mic = null; }
+            foreach (var d in _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
+                _mics.Add(d);
         }
+        catch { ForgetMics(); }
+        return _mics;
     }
 
     /// <summary>
@@ -214,16 +223,77 @@ public sealed class AudioService
         return names;
     }
 
-    /// <summary>Default microphone mute (affects every app: Discord, Zoom, games…).</summary>
+    /// <summary>True when all active capture devices are muted; setting mutes/unmutes every active mic (Discord, Zoom, games…).</summary>
     public bool? MicMuted
     {
-        get { try { return Mic?.AudioEndpointVolume.Mute; } catch { return null; } }
-        set { try { var m = Mic; if (m != null && value.HasValue) m.AudioEndpointVolume.Mute = value.Value; } catch (Exception ex) { Log.Write("audio: mic mute: " + ex.GetType().Name + ": " + ex.Message); } }
+        get
+        {
+            try
+            {
+                var mics = CaptureDevices();
+                if (mics.Count == 0) return null;
+                foreach (var m in mics)
+                    if (!m.AudioEndpointVolume.Mute) return false;
+                return true;
+            }
+            catch { ForgetMics(); return null; }
+        }
+        set
+        {
+            if (!value.HasValue) return;
+            try
+            {
+                var mics = CaptureDevices(forceRefresh: true);
+                if (value.Value)
+                {
+                    foreach (var m in mics)
+                    {
+                        try
+                        {
+                            if (!m.AudioEndpointVolume.Mute)
+                            {
+                                m.AudioEndpointVolume.Mute = true;
+                                _mutedByUs.Add(m.ID);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                else
+                {
+                    bool selective = _mutedByUs.Count > 0;
+                    foreach (var m in mics)
+                    {
+                        try
+                        {
+                            if (!selective || _mutedByUs.Contains(m.ID))
+                                m.AudioEndpointVolume.Mute = false;
+                        }
+                        catch { }
+                    }
+                    _mutedByUs.Clear();
+                }
+            }
+            catch (Exception ex) { Log.Write("audio: mic mute: " + ex.GetType().Name + ": " + ex.Message); }
+        }
     }
 
     public float MicPeak
     {
-        get { try { return Mic?.AudioMeterInformation.MasterPeakValue ?? 0; } catch { return 0; } }
+        get
+        {
+            try
+            {
+                float max = 0;
+                foreach (var m in CaptureDevices())
+                {
+                    float p = m.AudioMeterInformation.MasterPeakValue;
+                    if (p > max) max = p;
+                }
+                return max;
+            }
+            catch { ForgetMics(); return 0; }
+        }
     }
 
     public sealed record AppSound(string Name, float Volume, bool Muted);

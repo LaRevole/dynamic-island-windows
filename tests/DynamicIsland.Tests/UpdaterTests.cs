@@ -7,12 +7,19 @@ public class UpdaterTests
 {
     private const string Sha = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
 
-    private static string Release(string tag, string url = "https://github.com/Fuwni/dynamic-island-windows/releases/download/v2.0.1/Atoll-2.0.1-setup.exe", string? digest = "sha256:" + Sha) => $$"""
-        { "tag_name": "{{tag}}", "html_url": "https://github.com/Fuwni/dynamic-island-windows/releases/tag/{{tag}}",
+    private static string Release(string tag, string url = "https://github.com/LaRevole/dynamic-island-windows/releases/download/v2.3.0/Atoll-2.3.0-setup.exe", string? digest = "sha256:" + Sha) => $$"""
+        { "tag_name": "{{tag}}", "html_url": "https://github.com/LaRevole/dynamic-island-windows/releases/tag/{{tag}}",
           "assets": [
             { "name": "DynamicIsland-win-x64.zip", "browser_download_url": "https://github.com/x/y.zip", "size": 1 },
-            { "name": "Atoll-2.0.1-setup.exe", "browser_download_url": "{{url}}", "size": 4200000 {{(digest == null ? "" : $", \"digest\": \"{digest}\"")}} } ] }
+            { "name": "Atoll-2.3.0-setup.exe", "browser_download_url": "{{url}}", "size": 4200000 {{(digest == null ? "" : $", \"digest\": \"{digest}\"")}} } ] }
         """;
+
+    [Fact]
+    public void UpdatesCheckForkRepository()
+    {
+        Assert.Equal("LaRevole/dynamic-island-windows", Updater.Repo);
+        Assert.Equal("https://github.com/LaRevole/dynamic-island-windows/releases/latest", Updater.ReleasesPage);
+    }
 
     [Theory]
     [InlineData("v2.0.1", "2.0.0", true)]
@@ -49,7 +56,7 @@ public class UpdaterTests
     [Theory]
     [InlineData("https://example.com/Atoll-2.0.1-setup.exe")]
     [InlineData("https://github.com.evil.example/Atoll-2.0.1-setup.exe")]
-    [InlineData("http://github.com/Fuwni/dynamic-island-windows/releases/download/v2.0.1/Atoll-2.0.1-setup.exe")]
+    [InlineData("http://github.com/LaRevole/dynamic-island-windows/releases/download/v2.3.0/Atoll-2.3.0-setup.exe")]
     [InlineData("file:///C:/Windows/Temp/Atoll-2.0.1-setup.exe")]
     [InlineData("not a url")]
     public async Task OnlyAnHttpsInstallerFromGitHubIsDownloaded(string url)

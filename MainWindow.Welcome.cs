@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -66,7 +66,7 @@ public partial class MainWindow
         var win = new Window
         {
             WindowStyle = WindowStyle.None, AllowsTransparency = true, Background = Brushes.Transparent, ShowInTaskbar = false, Topmost = true,
-            ResizeMode = ResizeMode.NoResize, SizeToContent = SizeToContent.Height, Width = width + 48, Content = panel, Title = "Atoll",
+            ResizeMode = ResizeMode.NoResize, SizeToContent = SizeToContent.Height, Width = width + 48, Content = panel, Title = "LeFleur Atoll",
             FontFamily = FontFamily, WindowStartupLocation = WindowStartupLocation.Manual,
         };
         win.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, "Fg");
@@ -251,7 +251,7 @@ public partial class MainWindow
         }
         body.Children.Add(new ScrollViewer { Content = list, MaxHeight = 460, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         buttons.Children.Add(CardButton(L.T("Telegram-канал"), "GhostPill", () => SafeShell.OpenUrl(TelegramUrl)));
-        if (!AppPackage.IsPackaged) buttons.Children.Add(CardButton(L.T("Все версии"), "GhostPill", () => SafeShell.OpenUrl("https://github.com/Fuwni/dynamic-island-windows/releases")));
+        if (!AppPackage.IsPackaged) buttons.Children.Add(CardButton(L.T("Все версии"), "GhostPill", () => SafeShell.OpenUrl($"https://github.com/{Updater.Repo}/releases")));
         buttons.Children.Add(CardButton(L.T("Понятно"), "AccentPill", win.Close));
         win.Show();
     }

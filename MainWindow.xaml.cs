@@ -153,6 +153,7 @@ public partial class MainWindow : Window
         Safely("island size", ApplyIslandScale);
         Safely("claude", InitClaude);
         Safely("recording", InitRecording);
+        Safely("voice recorder", InitVoiceRecorder);
         Safely("extras", InitExtras);
 
         OnTick();
@@ -3300,11 +3301,14 @@ public partial class MainWindow : Window
         ApplyCaptureExclusion();
         Native.AddClipboardFormatListener(_hwnd);
         uint mods = Native.MOD_CONTROL | Native.MOD_ALT | Native.MOD_NOREPEAT;
-        foreach (var (id, vk, name) in new[] { (1, 0x49u, "I"), (2, 0x54u, "T"), (3, 0x53u, "S"), (4, 0x52u, "R") })
+        foreach (var (id, vk, name) in new[] { (1, 0x49u, "I"), (2, 0x54u, "T"), (3, 0x53u, "S"), (4, 0x52u, "R"), (8, 0x4Du, "M") })
             if (!Native.RegisterHotKey(_hwnd, id, mods, vk))
                 Log.Write($"Ctrl+Alt+{name} is taken by another program");
         RegisterCommandHotkey();
         RegisterOpenHotkey();
+        RegisterTranslateHotkey();
+        if (!Native.RegisterHotKey(_hwnd, 10, Native.MOD_CONTROL | Native.MOD_SHIFT | Native.MOD_NOREPEAT, 0x52u))
+            Log.Write("Ctrl+Shift+R is taken by another program");
     }
 
     // ---------------------------------------------------------------- the command bar's shortcut
@@ -3398,6 +3402,9 @@ public partial class MainWindow : Window
                 case 4: _ = RunAction("record"); break;
                 case 5 or 6: ToggleCommandBar(); break;
                 case 7: ToggleOpenFromKeyboard(); break;
+                case 8: ToggleMicMute(); break;
+                case 9: _ = TranslateSelectionAsync(); break;
+                case 10: ToggleVoiceRecording(); break;
             }
             handled = true;
         }
@@ -3410,7 +3417,7 @@ public partial class MainWindow : Window
     {
         if (_shutDown) return;
         _shutDown = true;
-        for (int id = 1; id <= 7; id++) Native.UnregisterHotKey(_hwnd, id);
+        for (int id = 1; id <= 10; id++) Native.UnregisterHotKey(_hwnd, id);
         Native.RemoveClipboardFormatListener(_hwnd);
         _sideToast?.Close();
         _media.Dispose();
@@ -3424,6 +3431,7 @@ public partial class MainWindow : Window
         ShutdownControlCenter(); // taskbar and desktop icons come back
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         if (_recording.IsRecording) _recording.Stop();
+        _voiceRec.Dispose();
     }
 
     // ================================================================ position
@@ -3781,9 +3789,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private RadioButton[] Tabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets, TabSettings];
+    private RadioButton[] Tabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabVoice, TabWidgets, TabSettings];
 
-    private FrameworkElement[] AllPages => [HomePage, MusicPage, WeatherPage, ChatPage, TimerPage, ClipPage, NotesPage, CalendarPage, SystemPage, WidgetsPage, SettingsPage];
+    private FrameworkElement[] AllPages => [HomePage, MusicPage, WeatherPage, ChatPage, TimerPage, ClipPage, NotesPage, CalendarPage, SystemPage, VoicePage, WidgetsPage, SettingsPage];
 
     private FrameworkElement CurrentPage
     {
@@ -3972,6 +3980,7 @@ public partial class MainWindow : Window
         else if (TabCalendar.IsChecked == true) RenderCalendar();
         else if (TabTimer.IsChecked == true) RenderTimer();
         else if (TabSystem.IsChecked == true) _ = RefreshSystemAsync(full: true);
+        else if (TabVoice.IsChecked == true) RenderVoicePage();
         else if (TabWidgets.IsChecked == true) RenderWidgetsPage();
         UpdateWebViewsMemoryState();
         Remeasure();
@@ -4377,6 +4386,14 @@ public partial class MainWindow : Window
             CompactTime.Text = $"{(int)t.TotalMinutes:00}:{t.Seconds:00}";
             CompactTime.Foreground = (Brush)FindResource("Danger");
         }
+        else if (_voiceRec.IsRecording)
+        {
+            var t = _voiceRec.Elapsed;
+            CompactTime.Text = $"{(int)t.TotalMinutes:00}:{t.Seconds:00}";
+            CompactTime.Foreground = _voiceRec.IsPaused
+                ? new SolidColorBrush(Color.FromRgb(0xFF, 0x9F, 0x0A))
+                : (Brush)FindResource("Danger");
+        }
         else
         {
             CompactTime.Text = PillClockText(now);
@@ -4384,6 +4401,7 @@ public partial class MainWindow : Window
         }
 
         UpdateProgress();
+        UpdateVoiceLiveUi();
         KeepRepeating();
         WatchKeyboard();
         Measure("brightness", WatchBrightness);
@@ -4400,10 +4418,11 @@ public partial class MainWindow : Window
     private void UpdateEyesVisibility()
     {
         bool playing = _lastMedia?.IsPlaying == true;
-        bool showArt = playing && _lastMedia?.Art != null && !_recording.IsRecording;
-        RecDot.Visibility = _recording.IsRecording ? Visibility.Visible : Visibility.Collapsed;
+        bool rec = _recording.IsRecording || _voiceRec.IsRecording;
+        bool showArt = playing && _lastMedia?.Art != null && !rec;
+        RecDot.Visibility = rec ? Visibility.Visible : Visibility.Collapsed;
         MiniArt.Visibility = showArt ? Visibility.Visible : Visibility.Collapsed;
-        Eyes.Visibility = !_recording.IsRecording ? Visibility.Visible : Visibility.Collapsed; // the character stays next to the cover
+        Eyes.Visibility = !rec ? Visibility.Visible : Visibility.Collapsed; // the character stays next to the cover
         EqBars.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
         UpdatePillRight();
     }
@@ -4577,6 +4596,12 @@ public partial class MainWindow : Window
 
     private void ToggleTheme()
     {
+        if (_settings.ThemeId is "lefleur_light" or "lefleur_larcorp")
+        {
+            var next = _settings.ThemeId == "lefleur_light" ? "lefleur_larcorp" : "lefleur_light";
+            ApplyThemePreset(BuiltInThemes.First(t => t.Id == next));
+            return;
+        }
         _settings.DarkTheme = !_settings.DarkTheme;
         _settings.Save();
         ApplyTheme();
@@ -4616,11 +4641,14 @@ public partial class MainWindow : Window
         _tray = new Forms.NotifyIcon
         {
             Icon = new System.Drawing.Icon(iconStream, Forms.SystemInformation.SmallIconSize),
-            Text = Settings.Safe ? "Atoll · " + L.T("безопасный режим") : "Atoll",
+            Text = Settings.Safe ? "LeFleur Atoll · " + L.T("безопасный режим") : "LeFleur Atoll",
             Visible = true,
             ContextMenuStrip = new Forms.ContextMenuStrip(),
         };
         _tray.ContextMenuStrip.Items.Add(L.T("Показать / спрятать  (Ctrl+Alt+I)"), null, (_, _) => ToggleHidden());
+        _tray.ContextMenuStrip.Items.Add(L.T("Микрофон вкл / выкл  (Ctrl+Alt+M)"), null, (_, _) => ToggleMicMute());
+        _tray.ContextMenuStrip.Items.Add(L.T("Диктофон  (Ctrl+Shift+R)"), null, (_, _) => ToggleVoiceRecording());
+        _tray.ContextMenuStrip.Items.Add(L.T("Перевод выделенного  (Ctrl+Shift+T)"), null, (_, _) => _ = TranslateSelectionAsync());
         _tray.ContextMenuStrip.Items.Add(L.T("Скриншот области  (Ctrl+Alt+S)"), null, (_, _) => _ = RunAction("region"));
         _tray.ContextMenuStrip.Items.Add(L.T("Выровнять по центру"), null, (_, _) => AlignIsland());
         _tray.ContextMenuStrip.Items.Add(L.T("Сменить тему  (Ctrl+Alt+T)"), null, (_, _) => ToggleTheme());

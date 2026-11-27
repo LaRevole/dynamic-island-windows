@@ -16,7 +16,7 @@ public partial class MainWindow
     {
         ["region"] = ("#3A9BFF", "#0A6CE0"), ["full"] = ("#7B79F7", "#4B49C9"), ["ocr"] = ("#FFB340", "#F08A00"),
         ["qr"] = ("#4AE06F", "#22B348"), ["picker"] = ("#FF5C7F", "#E0264F"), ["cleantext"] = ("#6FDBFF", "#2BA6D6"),
-        ["record"] = ("#FF6B61", "#E0352B"), ["command"] = ("#A0A0A8", "#6C6C74"),
+        ["record"] = ("#FF6B61", "#E0352B"), ["voice"] = ("#FF4D6D", "#C9184A"), ["command"] = ("#A0A0A8", "#6C6C74"),
     };
 
     private static Brush ChipBrush(string id)
@@ -37,6 +37,7 @@ public partial class MainWindow
         ("picker", "", L.T("Пипетка")),
         ("cleantext", "", L.T("Чистый текст")),
         ("record", "", L.T("Запись экрана")),
+        ("voice", "", L.T("Диктофон")),
         ("command", "", L.T("Команда")),
     ];
 
@@ -74,7 +75,7 @@ public partial class MainWindow
 
         foreach (var (id, glyph, label) in wide.Concat(round))
         {
-            bool rec = id == "record" && _recording.IsRecording;
+            bool rec = (id == "record" && _recording.IsRecording) || (id == "voice" && _voiceRec.IsRecording);
             var (top, _) = ActionColors.GetValueOrDefault(id, ("#3A9BFF", "#0A6CE0"));
             var b = new Button
             {
@@ -143,6 +144,7 @@ public partial class MainWindow
                 case "picker": await PickColorAsync(); break;
                 case "cleantext": CleanClipboard(); break;
                 case "record": ToggleRecording(); break;
+                case "voice": ToggleVoiceRecording(); break;
                 case "command": RunCommand(); break;
             }
         }

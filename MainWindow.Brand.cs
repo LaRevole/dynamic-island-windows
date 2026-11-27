@@ -180,8 +180,11 @@ public partial class MainWindow
         Directory.CreateDirectory(folder);
         await Task.Delay(500);
         RenderIcons(folder);
-        RenderIntro(Path.Combine(folder, "intro"), (int)(6.4 * Fps));
-        RenderOutro(Path.Combine(folder, "outro"), (int)(7.0 * Fps));
+        if (!Environment.GetCommandLineArgs().Contains("icons-only"))
+        {
+            RenderIntro(Path.Combine(folder, "intro"), (int)(6.4 * Fps));
+            RenderOutro(Path.Combine(folder, "outro"), (int)(7.0 * Fps));
+        }
         Services.Log.Write("brand: done -> " + folder);
         Application.Current.Shutdown();
     }

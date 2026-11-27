@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -215,6 +215,14 @@ public partial class MainWindow
         }
         CommandHotkeyBox.SelectedIndex = Array.FindIndex(CommandHotkeys, h => h.Name == _settings.CommandHotkey) is int ci && ci >= 0 ? ci : CommandHotkeys.Length;
         CommandHotkeyStatus.Text = CommandHotkeyHint();
+        if (TranslateHotkeyBox.Items.Count == 0)
+        {
+            foreach (var h in TranslateHotkeys) TranslateHotkeyBox.Items.Add(h.Name);
+            TranslateHotkeyBox.Items.Add(L.T("Выключено"));
+        }
+        TranslateHotkeyBox.SelectedIndex = Array.FindIndex(TranslateHotkeys, h => h.Name == _settings.TranslateHotkey) is int ti && ti >= 0 ? ti : TranslateHotkeys.Length;
+        TranslateHotkeyStatus.Text = L.T("Копирует выделение и показывает перевод под островом.");
+        MicMuteDotSwitch.IsChecked = _settings.ShowMicMuteDot;
         DonateButton.Visibility = DonateUrl.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RefreshFpsAccess();
         KaraokeSwitch.IsChecked = _settings.Karaoke;
@@ -331,6 +339,8 @@ public partial class MainWindow
         _settings.FollowMonitor = MonitorSwitch.IsChecked == true;
         _settings.DiscordSidePill = DiscordSideSwitch.IsChecked == true;
         _settings.ShowDiscordCall = DiscordShowSwitch.IsChecked == true;
+        _settings.ShowMicMuteDot = MicMuteDotSwitch.IsChecked == true;
+        UpdateMicMuteBadge();
         DiscordSideSwitch.IsEnabled = _settings.ShowDiscordCall;
         if (HideFromCapture != (CaptureSwitch.IsChecked == true))
         {
@@ -429,6 +439,17 @@ public partial class MainWindow
         _settings.Save();
         CommandHotkeyStatus.Text = RegisterCommandHotkey()
             ? CommandHotkeyHint()
+            : L.T("Это сочетание уже занято другой программой — выберите другое.");
+    }
+
+    private void TranslateHotkey_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_settingsLoading || TranslateHotkeyBox.SelectedIndex < 0) return;
+        int i = TranslateHotkeyBox.SelectedIndex;
+        _settings.TranslateHotkey = i < TranslateHotkeys.Length ? TranslateHotkeys[i].Name : "";
+        _settings.Save();
+        TranslateHotkeyStatus.Text = RegisterTranslateHotkey()
+            ? L.T("Копирует выделение и показывает перевод под островом.")
             : L.T("Это сочетание уже занято другой программой — выберите другое.");
     }
 

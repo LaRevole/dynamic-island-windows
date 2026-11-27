@@ -2,11 +2,27 @@
 
 All notable changes to Atoll (formerly "Dynamic Island for Windows"). Русская версия каждого пункта — ниже английской.
 
+## 2.3.0 — 2026-11-27
+
+- **Permanent mic-muted badge inside the pill:** when the system microphone is muted (`Ctrl+Alt+M` or via Windows/Discord), a compact circular badge stays visible inside `CompactView` so it moves seamlessly with karaoke and animations; clicking it unmutes immediately.
+- **Selected-text translation hotkey (`Ctrl+Shift+T` / `Ctrl+Alt+Y`):** reads the focused UI Automation selection directly where supported, falls back to waiting for held modifiers and sending `Ctrl+C` with scan codes (without polluting Clipboard History, restoring the previous text clipboard), translates via `CaptureService.TranslateDetailedAsync`, and shows a scrollable card with **Save to Notes** and **Copy**.
+- **Built-in Voice Recorder tab (`TabVoice`, `Ctrl+Shift+R` & Home):** dedicated tab with Start/Pause/Stop controls, live timer and mic level meter, muted-mic warning, and a list of saved 48 kHz WAV recordings in `Documents\LeFleur Atoll\Voice` with instant playback inside Atoll, reveal, and delete.
+- **Custom LeFleur Atoll icon:** updated vector `BrandArt` in obsidian-crimson LaRCorp palette with pearl ring, subtle floral star, and turquoise live dot (`Assets/icon.ico`, `docs/icon.png`).
+- **Reliable all-mic mute & fork self-updates:** `AudioService` now mutes and tracks all active Windows capture endpoints (fixing cases where `Default Multimedia` and `Default Communications` point to different devices such as Discord), and `Updater` checks releases from `LaRevole/dynamic-island-windows`.
+
+- **Постоянный значок выключенного микрофона внутри пилюли:** пока системный микрофон выключен, внутри острова отображается компактный круглый красный значок (плавно двигается вместе с караоке и шириной острова); нажатие сразу включает микрофон обратно.
+- **Перевод выделенного текста по хоткею (`Ctrl+Shift+T` / `Ctrl+Alt+Y`):** читает выделение через UI Automation или через `Ctrl+C` со скан-кодами и ожиданием отпускания клавиш (без засорения истории буфера, с восстановлением прежнего текста), переводит и открывает карточку с кнопками «В заметку» и «Скопировать».
+- **Вкладка «Диктофон» (`TabVoice`, `Ctrl+Shift+R`, Главная):** полноценная вкладка со стартом/паузой/стопом, таймером, живым уровнем микрофона, предупреждением о выключенном микрофоне и списком записей (`Documents\LeFleur Atoll\Voice`) с прослушиванием прямо в острове.
+- **Своя иконка LeFleur Atoll:** обновлён векторный знак `BrandArt` в палитре LaRCorp/LeFleur (`Assets/icon.ico`, `docs/icon.png`).
+- **Надёжный mute всех микрофонов и автообновления из форка:** `AudioService` теперь отключает все активные устройства захвата Windows (исправлен случай, когда `Default Multimedia` и `Default Communications` разные и Discord продолжал слышать микрофон), а встроенное обновление (`Updater`) теперь проверяет релизы в `LaRevole/dynamic-island-windows`.
+
 ## 2.2.1 — 2026-11-27
 
+- **LeFleur Atoll branding, presets & global mic mute:** renamed product display to **LeFleur Atoll**, added two minimalist presets (`LeFleur · Светлая` floral pink with iridescent shimmer and `LeFleur · LaRCorp` dark crimson + turquoise, `Ctrl+Alt+T` switches between them), and added global microphone mute toggle on `Ctrl+Alt+M`.
 - **Fork sync & native AIMP support:** synced with upstream Atoll 2.2.0 and merged native AIMP Remote API (`AIMP2_RemoteInfo`) integration (`feat/aimp-remote-support`) for real-time track metadata, playback state, and controls without external AIMP plugins.
 - **Yandex Music, WebView2 & memory optimization:** added `Яндекс Музыка` (`https://music.yandex.ru/`) as a Music tab source with Yandex ID sign-in pop-up allowlist (`yandex.ru`, `yandex.com`, `ya.ru`), localized source attribution, stale SMTC session recovery, mouse-wheel scrolling + visible vertical scrollbars inside embedded websites, shared/low-memory/auto-suspend WebView2 lifecycle (with paused CSS animations while folded), lazy `AppIndex`/`WallpaperService` loading, compact frost glass buffers, and Workstation GC memory conservation.
 
+- **Брендинг LeFleur Atoll, пресеты и глобальный mute микрофона:** продукт переименован в **LeFleur Atoll**, добавлены два минималистичных пресета (`LeFleur · Светлая` — цветочная розовая гамма с переливом, и `LeFleur · LaRCorp` — тёмно-красный + бирюзовый, переключаются по `Ctrl+Alt+T`), а также глобальное выключение/включение микрофона по `Ctrl+Alt+M`.
 - **Синхронизация форка и нативная поддержка AIMP:** база обновлена до Atoll 2.2.0, вмержена нативная интеграция с AIMP Remote API (`AIMP2_RemoteInfo`) из ветки `feat/aimp-remote-support` — отображение трека, состояния воспроизведения и управление без сторонних плагинов AIMP.
 - **Яндекс Музыка, WebView2 и оптимизация памяти:** добавлен источник `Яндекс Музыка` (`https://music.yandex.ru/`) во вкладку «Музыка» с поиском и разделом «Коллекция», поддержкой окон входа Яндекс ID (`yandex.ru`, `yandex.com`, `ya.ru`), локализованным именем плеера, восстановлением зависших WebView2-сессий, прокруткой колёсиком мыши и боковым вертикальным скроллбаром на сайтах, а также комплексной оптимизацией ОЗУ (единый профиль WebView2, `Low` memory target, пауза CSS-анимаций в свёрнутом состоянии, авто-приостановка/выгрузка при простое, ленивый `AppIndex` и `WallpaperService`, очистка крупных буферов стекла и консервативный режим GC).
 

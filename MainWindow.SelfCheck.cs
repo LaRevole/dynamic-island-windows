@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -177,7 +177,7 @@ public partial class MainWindow
     private string SelfCheckReport()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Atoll {Updater.Current.ToString(3)} · Windows {Environment.OSVersion.Version.Build} · {(AppPackage.IsPackaged ? "Store" : Updater.CanSelfUpdate ? "installed" : "portable")} · {Loc.Lang}");
+        sb.AppendLine($"LeFleur Atoll {Updater.Current.ToString(3)} · Windows {Environment.OSVersion.Version.Build} · {(AppPackage.IsPackaged ? "Store" : Updater.CanSelfUpdate ? "installed" : "portable")} · {Loc.Lang}");
         foreach (var r in _checkRows)
         {
             var mark = r.State switch { CheckState.Ok => "OK", CheckState.Warn => "!", CheckState.Bad => "X", _ => "-" };

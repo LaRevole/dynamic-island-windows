@@ -143,6 +143,10 @@ public sealed class Settings
     public string OpenHotkey { get; set; } = "Ctrl+Alt+O";
     /// <summary>Shortcut of the command bar: "Alt+Space" (with Ctrl+Alt+Space), "Ctrl+Alt+Space", "Ctrl+Shift+Space" or "" (off).</summary>
     public string CommandHotkey { get; set; } = "Alt+Space";
+    /// <summary>Shortcut for translating selected text in any window: "Ctrl+Shift+T", "Ctrl+Alt+Y" or "" (off).</summary>
+    public string TranslateHotkey { get; set; } = "Ctrl+Shift+T";
+    /// <summary>Show a permanent circular mic-off badge beside the island when the system microphone is muted.</summary>
+    public bool ShowMicMuteDot { get; set; } = true;
     /// <summary>After a screenshot: false = open the editor, true = save it and copy it, only a short notice.</summary>
     public bool ScreenshotQuick { get; set; }
     /// <summary>Show the saved picture in File Explorer.</summary>
@@ -240,7 +244,7 @@ public sealed class Settings
     public bool HomeMusic { get; set; } = true;
     public bool HomeWeather { get; set; } = true;
     public List<string> Actions { get; set; } =
-        ["region", "full", "ocr", "qr", "picker", "cleantext", "record", "command"];
+        ["region", "full", "ocr", "qr", "picker", "cleantext", "record", "voice", "command"];
 
     // actions
     public string Command { get; set; } = "";
@@ -361,7 +365,7 @@ public sealed class Settings
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "DynamicIsland", "settings.json");
 
-    private const int CurrentVersion = 3;
+    private const int CurrentVersion = 4;
 
     internal static Settings Load()
     {
@@ -392,11 +396,15 @@ public sealed class Settings
         }
 
         if (existed) s.Onboarded = true;   // people who already use it never get the welcome steps
-        if (s.Version < CurrentVersion)
+        if (s.Version < 3)
         {
             // v3: glass was unreadable and the waves too much → solid & calm
             s.GlassOpacity = 1;
             s.LiquidWaves = false;
+        }
+        if (s.Version < CurrentVersion)
+        {
+            if (!s.Actions.Contains("voice")) s.Actions.Add("voice");
             s.Version = CurrentVersion;
         }
         return s;

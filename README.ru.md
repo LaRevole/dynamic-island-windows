@@ -4,9 +4,9 @@
 
 <img src="docs/screenshots/compact-music.png" width="420" alt="Atoll в свёрнутом виде">
 
-# Atoll
+# LeFleur Atoll
 
-### «Островок» в стиле Dynamic Island для Windows
+### Минималистичный «островок» в стиле Dynamic Island для Windows (на базе Atoll)
 
 **«Островок» как на iPhone — только на компьютере.**
 Музыка со словами песен, погода, таймеры, скриншоты с распознаванием и переводом текста, чат с ИИ, буфер обмена,
@@ -16,7 +16,7 @@
 
 🎬 **[Видео-обзор за полторы минуты](https://github.com/Fuwni/dynamic-island-windows/releases/download/v1.2.0/dynamic-island-review-ru.mp4)** · 🌍 7 языков интерфейса
 
-[![Скачать](https://img.shields.io/github/v/release/Fuwni/dynamic-island-windows?label=%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&style=for-the-badge&color=30D158)](https://github.com/Fuwni/dynamic-island-windows/releases/latest)
+[![Скачать](https://img.shields.io/github/v/release/LaRevole/dynamic-island-windows?label=%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&style=for-the-badge&color=30D158)](https://github.com/LaRevole/dynamic-island-windows/releases/latest)
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0A84FF?style=for-the-badge&logo=windows)
 ![.NET 10](https://img.shields.io/badge/.NET-10-5E5CE6?style=for-the-badge&logo=dotnet)
 [![Лицензия MIT](https://img.shields.io/badge/license-MIT-8E8E93?style=for-the-badge)](LICENSE)
@@ -27,6 +27,8 @@
 
 ## Содержание
 
+- [Обновление LeFleur Atoll 2.3.0](#обновление-lefleur-atoll-230)
+- [Как работают обновления](#обновления)
 - [Что нового в 1.8](#что-нового-в-18)
 - [Что умеет](#что-умеет)
 - [Установка за 2 минуты](#установка-за-2-минуты)
@@ -37,6 +39,23 @@
 - [Приватность и безопасность](#приватность-и-безопасность)
 - [Частые вопросы](#частые-вопросы)
 - [Сборка из исходников](#сборка-из-исходников)
+
+---
+
+<a id="обновление-lefleur-atoll-230"></a>
+## Обновление LeFleur Atoll 2.3.0
+
+Форк [Fuwni/dynamic-island-windows](https://github.com/Fuwni/dynamic-island-windows) (актуализирован до базы `v2.2.0` — границы экрана, боковое размещение и панель задач), развиваемый в [LaRevole/dynamic-island-windows](https://github.com/LaRevole/dynamic-island-windows) с упором на практичность, нативные плееры и низкое потребление памяти:
+
+- 🎧 **Нативная поддержка AIMP Remote API (`AIMP2_RemoteInfo`)**: название, исполнитель, альбом, обложка, прогресс, перемотка, повтор и управление воспроизведением без сторонних плагинов для AIMP.
+- 🎵 **Встроенная Яндекс Музыка (`https://music.yandex.ru/`)**: отдельный источник во вкладке «Музыка» с поиском, разделом «Коллекция», окнами входа Яндекс ID и автоматическим восстановлением зависших медиа-сессий.
+- 🌸 **Минималистичные пресеты LeFleur**: **LeFleur · Светлая** (нежная цветочная розовая гамма с переливом) и **LeFleur · LaRCorp** (тёмно-красный + бирюзовый) в *Настройки → Внешний вид* и по `Ctrl+Alt+T`.
+- 🎙️ **Глобальный mute всех микрофонов (`Ctrl+Alt+M`) и постоянный значок в острове**: выключает сразу все активные устройства записи Windows (включая связку разных `Default Multimedia` и `Default Communications`, например для Discord) и держит кликабельный красный значок внутри пилюли, пока микрофон выключен.
+- 🌐 **Перевод выделенного текста (`Ctrl+Shift+T` / `Ctrl+Alt+Y`)**: считывает выделение через UI Automation или `Ctrl+C` со скан-кодами без засорения истории буфера, восстанавливает прежний текст буфера и открывает компактную карточку с кнопками **«В заметку»** и **«Скопировать»**.
+- 🗣️ **Вкладка «Диктофон» (`TabVoice`, `Ctrl+Shift+R`)**: запись 48 кГц WAV в `Документы\LeFleur Atoll\Voice` с таймером, живым уровнем громкости, предупреждением о выключенном микрофоне и прослушиванием записей прямо в острове.
+- 🎨 **Своя иконка LeFleur Atoll**: векторная иконка и логотип в палитре LaRCorp/LeFleur (`Assets/icon.ico`, `docs/icon.png`).
+- 🔄 **Автообновления из этого репозитория**: встроенный механизм обновлений переключён с upstream на `LaRevole/dynamic-island-windows`.
+- 🖱️ **Фиксы WebView2 и оптимизация ОЗУ**: плавный скролл колёсиком на сайтах без переключения вкладок, видимый скроллбар, общий профиль WebView2 с лимитом кэша, авто-пауза/выгрузка при простое и сжатие буферов стекла (с ~457 МБ при открытом WebView2 до ~61–68 МБ в покое).
 
 ---
 
@@ -172,7 +191,7 @@
 
 **Установщик (рекомендуется)**
 
-1. Откройте **[Releases](https://github.com/Fuwni/dynamic-island-windows/releases/latest)** и скачайте **`DynamicIsland-…-setup.exe`**.
+1. Откройте **[Releases](https://github.com/LaRevole/dynamic-island-windows/releases/latest)** и скачайте **`Atoll-…-setup.exe`**.
 2. Запустите его. Он ставит программу только для вас (без прав администратора), добавляет её в меню «Пуск» и может включить автозапуск.
 3. Windows может показать синее окно **«Windows защитила ваш компьютер»**: программа не подписана платным сертификатом.
    Нажмите **«Подробнее» → «Выполнить в любом случае»**. Это нужно один раз.
@@ -189,7 +208,12 @@
 | Microsoft Edge WebView2 Runtime | вкладка «Чат» | в Windows 11 уже есть; иначе — [скачать](https://developer.microsoft.com/microsoft-edge/webview2/) |
 | Visual C++ Redistributable 2015–2022 (x64) | запись экрана | обычно уже стоит; иначе — [скачать](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 
-**Обновить:** запустите новый установщик поверх старого — настройки сохранятся.
+<a id="обновления"></a>
+**Обновление (автоматически и вручную):**
+- **Автопроверка:** LeFleur Atoll проверяет свежие релизы в **[LaRevole/dynamic-island-windows](https://github.com/LaRevole/dynamic-island-windows/releases)** при старте и каждые 6 часов (включается/выключается в **Настройки → Поведение → Обновления**).
+- **Версия с установщиком:** при нажатии на уведомление или кнопку **«Обновить»** скачивается `Atoll-…-setup.exe` по HTTPS, проверяется контрольная сумма SHA-256 с GitHub, и установка проходит поверх текущей версии с сохранением всех настроек и заметок.
+- **Портативная версия (`DynamicIsland-win-x64.zip`):** открывается страница релиза на GitHub для скачивания нового архива (распакуйте с заменой файлов).
+- **Вручную:** просто запустите новый установщик поверх старого — настройки и заметки сохранятся.
 
 **Удалить (10 секунд):** **Настройки → Поведение → «Удалить Atoll»** или **Параметры Windows → Приложения → Установленные приложения → Atoll → Удалить**.
 Удаляются программа, ярлык в «Пуске», автозапуск и хуки Claude Code; настройки, заметки и вход в чаты — по вашему выбору.
@@ -217,7 +241,10 @@
 | `Ctrl` + `Alt` + `I` | показать / спрятать остров |
 | `Ctrl` + `Alt` + `S` | скриншот области |
 | `Ctrl` + `Alt` + `R` | начать / остановить запись экрана |
-| `Ctrl` + `Alt` + `T` | тёмная ↔ светлая тема |
+| `Ctrl` + `Alt` + `T` | тёмная ↔ светлая / тема LeFleur |
+| `Ctrl` + `Alt` + `M` | включить / выключить микрофон во всей системе |
+| `Ctrl` + `Shift` + `T` / `Ctrl` + `Alt` + `Y` | перевести выделенный текст |
+| `Ctrl` + `Shift` + `R` | начать / остановить диктофон |
 | `Alt` + `Space` или `Ctrl` + `Alt` + `Space` | командная строка (другое сочетание или выкл.: Настройки → Поведение) |
 
 В редакторе скриншота: `Ctrl+Z` — отменить, `Ctrl+C` — копировать, `Ctrl+S` — сохранить, `Esc` — закрыть.
@@ -316,7 +343,7 @@
 Нужен [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
-git clone https://github.com/Fuwni/dynamic-island-windows.git
+git clone https://github.com/LaRevole/dynamic-island-windows.git
 cd dynamic-island-windows
 dotnet run -c Release
 ```

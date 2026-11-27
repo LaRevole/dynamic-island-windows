@@ -32,7 +32,45 @@ internal static class Native
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     public const int WM_COMMAND = 0x0111;
     public const int WM_USER = 0x0400;
-    public const uint MOD_ALT = 0x1, MOD_CONTROL = 0x2, MOD_NOREPEAT = 0x4000;
+    public const uint MOD_ALT = 0x1, MOD_CONTROL = 0x2, MOD_SHIFT = 0x4, MOD_NOREPEAT = 0x4000;
+
+    [DllImport("user32.dll")] public static extern uint GetClipboardSequenceNumber();
+    [DllImport("user32.dll")] private static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT { public uint type; public INPUTUNION u; }
+    [StructLayout(LayoutKind.Explicit)]
+    private struct INPUTUNION { [FieldOffset(0)] public KEYBDINPUT ki; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr dwExtraInfo; }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    /// <summary>Synthesize a clean Ctrl+C copy with scan codes and release any held Shift/Alt left/right keys.</summary>
+    public static void SendCtrlC()
+    {
+        const uint INPUT_KEYBOARD = 1, KEYEVENTF_KEYUP = 0x0002;
+        const ushort VK_LSHIFT = 0xA0, VK_RSHIFT = 0xA1, VK_LCONTROL = 0xA2, VK_RCONTROL = 0xA3, VK_LMENU = 0xA4, VK_RMENU = 0xA5, VK_C = 0x43;
+        var list = new List<INPUT>();
+        static INPUT Key(ushort vk, uint flags = 0) => new()
+        {
+            type = INPUT_KEYBOARD,
+            u = new INPUTUNION { ki = new KEYBDINPUT { wVk = vk, wScan = (ushort)MapVirtualKey(vk, 0), dwFlags = flags } },
+        };
+
+        foreach (var mod in new[] { VK_LSHIFT, VK_RSHIFT, VK_LMENU, VK_RMENU })
+            if (KeyDown(mod)) list.Add(Key(mod, KEYEVENTF_KEYUP));
+
+        bool ctrlDown = KeyDown(VK_LCONTROL) || KeyDown(VK_RCONTROL);
+        if (!ctrlDown) list.Add(Key(VK_LCONTROL));
+        list.Add(Key(VK_C));
+        list.Add(Key(VK_C, KEYEVENTF_KEYUP));
+        if (!ctrlDown) list.Add(Key(VK_LCONTROL, KEYEVENTF_KEYUP));
+
+        var arr = list.ToArray();
+        SendInput((uint)arr.Length, arr, Marshal.SizeOf<INPUT>());
+    }
 
     [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
